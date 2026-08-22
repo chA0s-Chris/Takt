@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-coverage": {
+      "version": "18.9.0",
+      "commands": [
+        "dotnet-coverage"
+      ],
+      "rollForward": false
+    },
+    "jetbrains.resharper.globaltools": {
+      "version": "2026.2.0",
+      "commands": [
+        "jb"
+      ],
+      "rollForward": false
+    }
+  }
+}
