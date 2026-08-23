@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the running build pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is the primary platform, Linux the secondary one; the credential
+        # store differs between them, so both are built and tested.
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', 'global.json', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Takt.slnx
+
+      - name: Build
+        # Release also turns warnings into errors (see Directory.Build.props).
+        run: dotnet build Takt.slnx --configuration Release --no-restore
+
+      - name: Test
+        # LogFilePrefix rather than LogFileName: both test projects write into the same
+        # directory, and a fixed name would have the second run overwrite the first.
+        run: >
+          dotnet test Takt.slnx
+          --configuration Release
+          --no-build
+          --logger "trx;LogFilePrefix=takt"
+          --results-directory artifacts/test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: artifacts/test-results
+          if-no-files-found: warn
