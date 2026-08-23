@@ -160,8 +160,9 @@ surface per entry without corrupting local state.
 - Version stamping, app icon, README (install = copy the binary; where data lives;
   how to create a Jira API token).
 - GitHub Actions: `ci.yml` builds and tests every push and pull request on Linux and
-  Windows; `release.yml` publishes both binaries for a `v*.*.*` tag and attaches them
-  to the release drafted by Release Drafter.
+  Windows. `release.yml` is started by hand with a version: it publishes both
+  binaries, then creates the release, which tags the built commit and carries the
+  notes from the Release Drafter draft.
 
 Notes:
 
