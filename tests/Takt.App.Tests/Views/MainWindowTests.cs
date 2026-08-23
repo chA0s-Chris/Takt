@@ -10,7 +10,6 @@ using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAssertions;
-using Takt.App.Tests.TestSupport;
 using Takt.App.ViewModels;
 using Takt.App.Views;
 using Takt.Core.Domain;

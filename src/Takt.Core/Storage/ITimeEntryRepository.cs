@@ -37,11 +37,12 @@ public interface ITimeEntryRepository
     TimeEntry? GetOpenEntry();
 
     /// <summary>
-    /// Returns the completed entries that carry a Jira issue key and are not in sync
-    /// with Jira, ordered by start time.
+    /// Returns the completed entries that are not in sync with Jira, ordered by start
+    /// time. Entries without an issue key are included; deciding what to do with them is
+    /// not the repository's business.
     /// </summary>
-    /// <returns>The entries awaiting a push to Jira.</returns>
-    IReadOnlyList<TimeEntry> GetPendingSync();
+    /// <returns>The entries that have no matching Jira worklog.</returns>
+    IReadOnlyList<TimeEntry> GetUnsynced();
 
     /// <summary>Inserts a new entry. A <see cref="Guid.Empty"/> identifier is replaced with a new one.</summary>
     /// <param name="entry">The entry to insert.</param>

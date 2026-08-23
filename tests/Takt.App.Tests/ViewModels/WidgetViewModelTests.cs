@@ -4,7 +4,6 @@ namespace Takt.App.Tests.ViewModels;
 
 using FluentAssertions;
 using NUnit.Framework;
-using Takt.App.Tests.TestSupport;
 using Takt.App.ViewModels;
 using Takt.Core.Storage;
 using Takt.Core.Tests.TestSupport;

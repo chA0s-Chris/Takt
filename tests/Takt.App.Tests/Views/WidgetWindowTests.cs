@@ -6,7 +6,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using FluentAssertions;
-using Takt.App.Tests.TestSupport;
 using Takt.App.ViewModels;
 using Takt.App.Views;
 using Takt.Core.Storage;

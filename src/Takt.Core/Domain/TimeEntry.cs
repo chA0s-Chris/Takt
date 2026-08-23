@@ -24,6 +24,13 @@ public sealed class TimeEntry
     /// <summary>The identifier of the Jira worklog created for this entry, once pushed.</summary>
     public String? JiraWorklogId { get; set; }
 
+    /// <summary>
+    /// The issue the worklog was created on. Kept separately from <see cref="JiraIssueKey"/>
+    /// because an edit may move the entry to another issue, and the old worklog has to be
+    /// removed from the issue it actually lives on.
+    /// </summary>
+    public String? JiraWorklogIssueKey { get; set; }
+
     /// <summary>An optional free-text note; used as the worklog comment when pushed to Jira.</summary>
     public String? Note { get; set; }
 

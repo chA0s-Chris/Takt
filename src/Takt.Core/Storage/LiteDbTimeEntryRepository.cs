@@ -44,9 +44,9 @@ public sealed class LiteDbTimeEntryRepository : ITimeEntryRepository
     public TimeEntry? GetOpenEntry() => _collection.FindOne(x => x.EndedAt == null);
 
     /// <inheritdoc/>
-    public IReadOnlyList<TimeEntry> GetPendingSync() =>
+    public IReadOnlyList<TimeEntry> GetUnsynced() =>
         _collection.Query()
-                   .Where(x => x.SyncState != SyncState.Synced && x.JiraIssueKey != null && x.EndedAt != null)
+                   .Where(x => x.SyncState != SyncState.Synced && x.EndedAt != null)
                    .OrderBy(x => x.StartedAt)
                    .ToList();
 

@@ -137,7 +137,7 @@ public class LiteDbTimeEntryRepositoryTests
     }
 
     [Test]
-    public void GetPendingSync_ReturnsClosedUnsyncedEntriesWithIssueKey()
+    public void GetUnsynced_ReturnsTheClosedEntriesWithoutAMatchingWorklog()
     {
         var pendingLocal = CreateClosedEntry(BaseTime);
         var pendingModified = CreateClosedEntry(BaseTime.AddHours(1));
@@ -154,9 +154,9 @@ public class LiteDbTimeEntryRepositoryTests
         _repository.Insert(withoutIssueKey);
         _repository.Insert(stillRunning);
 
-        var result = _repository.GetPendingSync();
+        var result = _repository.GetUnsynced();
 
-        result.Select(x => x.Id).Should().Equal(pendingLocal.Id, pendingModified.Id);
+        result.Select(x => x.Id).Should().Equal(pendingLocal.Id, pendingModified.Id, withoutIssueKey.Id);
     }
 
     [Test]
