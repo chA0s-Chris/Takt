@@ -3,6 +3,7 @@
 namespace Takt.Core.Tests.Storage;
 
 using FluentAssertions;
+using LiteDB;
 using NUnit.Framework;
 using Takt.Core.Domain;
 using Takt.Core.Storage;
@@ -31,6 +32,40 @@ public class LiteDbSettingsRepositoryTests
 
         settings.JiraBaseUrl.Should().BeNull();
         settings.JiraEmail.Should().BeNull();
+        settings.WidgetAlwaysOnTop.Should().BeTrue();
+        settings.WidgetShowIssueKey.Should().BeTrue();
+    }
+
+    [Test]
+    public void Get_KeepsThePreferenceDefaultsForDocumentsWrittenBeforeTheyExisted()
+    {
+        var collection = _tempDatabase.Database.Database.GetCollection(TaktDatabase.SettingsCollectionName);
+        collection.Insert(new BsonDocument
+        {
+            ["_id"] = 1,
+            ["JiraEmail"] = "chris@example.com"
+        });
+
+        var settings = _repository.Get();
+
+        settings.JiraEmail.Should().Be("chris@example.com");
+        settings.WidgetAlwaysOnTop.Should().BeTrue();
+        settings.WidgetShowIssueKey.Should().BeTrue();
+    }
+
+    [Test]
+    public void Save_RoundTripsTheWidgetPreferences()
+    {
+        _repository.Save(new()
+        {
+            WidgetAlwaysOnTop = false,
+            WidgetShowIssueKey = false
+        });
+
+        var stored = _repository.Get();
+
+        stored.WidgetAlwaysOnTop.Should().BeFalse();
+        stored.WidgetShowIssueKey.Should().BeFalse();
     }
 
     [Test]

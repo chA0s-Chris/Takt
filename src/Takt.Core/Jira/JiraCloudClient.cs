@@ -2,6 +2,7 @@
 // This file is licensed under the MIT license. See LICENSE in the project root for more information.
 namespace Takt.Core.Jira;
 
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -41,6 +42,25 @@ public sealed class JiraCloudClient : IJiraClient
 
     private static AuthenticationHeaderValue CreateBasicAuthentication(String email, String token) =>
         new("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{email}:{token}")));
+
+    private static String? ParseAccountName(JsonElement root)
+    {
+        foreach (var propertyName in new[]
+                 {
+                     "displayName",
+                     "emailAddress"
+                 })
+        {
+            if (root.TryGetProperty(propertyName, out var property)
+                && property.ValueKind == JsonValueKind.String
+                && property.GetString() is { Length: > 0 } value)
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
 
     private static List<JiraIssueSummary> ParseIssues(JsonElement root)
     {
@@ -123,6 +143,45 @@ public sealed class JiraCloudClient : IJiraClient
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken)
                                                    .ConfigureAwait(false);
             return ParseIssues(document.RootElement);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<JiraConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default)
+    {
+        if (GetConfiguration() is not { } configuration)
+        {
+            return new(false, "Base URL, e-mail, and API token are required.");
+        }
+
+        try
+        {
+            var requestUri = new Uri(configuration.BaseAddress, "/rest/api/3/myself");
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            request.Headers.Authorization = CreateBasicAuthentication(configuration.Email, configuration.Token);
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                return new(false, "Jira rejected the credentials — check the e-mail and API token.");
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new(false, $"Jira answered with {(Int32)response.StatusCode} {response.ReasonPhrase}.");
+            }
+
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
+            {
+                using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken)
+                                                       .ConfigureAwait(false);
+                return new(true, $"Connected as {ParseAccountName(document.RootElement) ?? configuration.Email}.");
+            }
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException)
+        {
+            return new(false, "Could not reach Jira — check the base URL and your connection.");
         }
     }
 }

@@ -5,11 +5,15 @@ namespace Takt.App.Tests.TestSupport;
 using Takt.Core.Jira;
 
 /// <summary>
-/// An <see cref="IJiraClient"/> stub returning preconfigured search results and
-/// capturing the last query.
+/// An <see cref="IJiraClient"/> stub returning preconfigured search and connection
+/// results and capturing the last query.
 /// </summary>
 public sealed class StubJiraClient : IJiraClient
 {
+    public JiraConnectionResult ConnectionResult { get; set; } = new(true, "Connected as tester.");
+
+    public Int32 ConnectionTestCount { get; private set; }
+
     public String? LastQuery { get; private set; }
 
     public IReadOnlyList<JiraIssueSummary> Results { get; set; } = [];
@@ -21,5 +25,11 @@ public sealed class StubJiraClient : IJiraClient
     {
         LastQuery = query;
         return Task.FromResult(Results);
+    }
+
+    public Task<JiraConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default)
+    {
+        ConnectionTestCount++;
+        return Task.FromResult(ConnectionResult);
     }
 }

@@ -79,8 +79,14 @@ public sealed partial class App : Application
         services.AddSingleton<IJiraClient, JiraCloudClient>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<TrackingService>();
+        services.AddSingleton<SettingsNotifier>();
         services.AddSingleton<WidgetViewModel>();
         services.AddSingleton<WidgetWindow>();
+        services.AddSingleton<OverviewViewModel>();
+        services.AddSingleton<TemplatesViewModel>();
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<MainWindow>();
         return services.BuildServiceProvider();
     }
 
@@ -156,16 +162,21 @@ public sealed partial class App : Application
 
         _jiraSettingsDialog = new(
             serviceProvider.GetRequiredService<ISettingsRepository>(),
-            serviceProvider.GetRequiredService<ICredentialStore>());
+            serviceProvider.GetRequiredService<ICredentialStore>(),
+            serviceProvider.GetRequiredService<SettingsNotifier>());
         _jiraSettingsDialog.Closed += (_, _) => _jiraSettingsDialog = null;
         _jiraSettingsDialog.Show();
     }
 
     private void ShowMainWindow()
     {
-        _mainWindow ??= new();
-        _mainWindow.Show();
-        _mainWindow.Activate();
+        if (_serviceProvider is not { } serviceProvider)
+        {
+            return;
+        }
+
+        _mainWindow ??= serviceProvider.GetRequiredService<MainWindow>();
+        _mainWindow.ShowAndActivate();
     }
 
     private void ShowWidget()

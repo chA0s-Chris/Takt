@@ -7,7 +7,10 @@ namespace Takt.Core.Tests.TestSupport;
 /// </summary>
 public sealed class TestTimeProvider : TimeProvider
 {
+    public override TimeZoneInfo LocalTimeZone => Zone;
     public DateTimeOffset UtcNow { get; set; }
+
+    public TimeZoneInfo Zone { get; set; } = TimeZoneInfo.Utc;
 
     public override DateTimeOffset GetUtcNow() => UtcNow;
 }

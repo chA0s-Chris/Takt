@@ -138,6 +138,52 @@ public class JiraCloudClientTests
         await act.Should().ThrowAsync<HttpRequestException>();
     }
 
+    [Test]
+    public async Task TestConnection_ReportsMissingConfiguration()
+    {
+        var result = await _client.TestConnectionAsync();
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("required");
+    }
+
+    [Test]
+    public async Task TestConnection_ReportsTheAccountOnSuccess()
+    {
+        Configure();
+        _handler.ResponseContent = """{ "displayName": "Chris Flessa", "emailAddress": "chris@example.com" }""";
+
+        var result = await _client.TestConnectionAsync();
+
+        _handler.RequestUri.Should().Be(new Uri("https://acme.atlassian.net/rest/api/3/myself"));
+        result.Success.Should().BeTrue();
+        result.Message.Should().Be("Connected as Chris Flessa.");
+    }
+
+    [Test]
+    public async Task TestConnection_ReportsRejectedCredentials()
+    {
+        Configure();
+        _handler.StatusCode = HttpStatusCode.Unauthorized;
+
+        var result = await _client.TestConnectionAsync();
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("rejected the credentials");
+    }
+
+    [Test]
+    public async Task TestConnection_ReportsAnUnexpectedStatus()
+    {
+        Configure();
+        _handler.StatusCode = HttpStatusCode.ServiceUnavailable;
+
+        var result = await _client.TestConnectionAsync();
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("503");
+    }
+
     private void Configure(String baseUrl = "https://acme.atlassian.net")
     {
         _settings.Save(new()

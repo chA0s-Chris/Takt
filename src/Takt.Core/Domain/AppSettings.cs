@@ -17,9 +17,15 @@ public sealed class AppSettings
     /// <summary>The e-mail address used for Jira Basic authentication.</summary>
     public String? JiraEmail { get; set; }
 
+    /// <summary>Indicates whether the floating widget stays above other windows.</summary>
+    public Boolean WidgetAlwaysOnTop { get; set; } = true;
+
     /// <summary>The saved horizontal screen position of the floating widget.</summary>
     public Int32? WidgetPositionX { get; set; }
 
     /// <summary>The saved vertical screen position of the floating widget.</summary>
     public Int32? WidgetPositionY { get; set; }
+
+    /// <summary>Indicates whether the widget shows the Jira issue key of the current task.</summary>
+    public Boolean WidgetShowIssueKey { get; set; } = true;
 }

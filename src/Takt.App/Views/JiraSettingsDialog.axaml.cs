@@ -4,6 +4,7 @@ namespace Takt.App.Views;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Takt.App.Services;
 using Takt.Core.Jira;
 using Takt.Core.Security;
 using Takt.Core.Storage;
@@ -16,17 +17,21 @@ using Takt.Core.Storage;
 public sealed partial class JiraSettingsDialog : Window
 {
     private readonly ICredentialStore _credentials;
+    private readonly SettingsNotifier _notifier;
     private readonly ISettingsRepository _settings;
 
     /// <summary>Creates the dialog and loads the current configuration.</summary>
     /// <param name="settings">The settings repository.</param>
     /// <param name="credentials">The credential store holding the API token.</param>
-    public JiraSettingsDialog(ISettingsRepository settings, ICredentialStore credentials)
+    /// <param name="notifier">The notifier announcing the saved settings.</param>
+    public JiraSettingsDialog(ISettingsRepository settings, ICredentialStore credentials, SettingsNotifier notifier)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(credentials);
+        ArgumentNullException.ThrowIfNull(notifier);
         _settings = settings;
         _credentials = credentials;
+        _notifier = notifier;
         InitializeComponent();
 
         var current = _settings.Get();
@@ -58,6 +63,7 @@ public sealed partial class JiraSettingsDialog : Window
             _credentials.Set(JiraCloudClient.ApiTokenCredentialName, token);
         }
 
+        _notifier.NotifyChanged();
         Close();
     }
 }

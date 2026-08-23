@@ -1,7 +1,180 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Takt.App.App">
+             x:Class="Takt.App.App"
+             RequestedThemeVariant="Light">
+    <Application.Resources>
+        <SolidColorBrush x:Key="TaktAccentBrush" Color="#3F51B5" />
+        <SolidColorBrush x:Key="TaktAccentSoftBrush" Color="#E4E8F6" />
+        <SolidColorBrush x:Key="TaktCardBorderBrush" Color="#E6E9EF" />
+        <SolidColorBrush x:Key="TaktCardBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="TaktChipBrush" Color="#EEF1F7" />
+        <SolidColorBrush x:Key="TaktChipTextBrush" Color="#44506B" />
+        <SolidColorBrush x:Key="TaktControlBorderBrush" Color="#D5DAE3" />
+        <SolidColorBrush x:Key="TaktDangerBrush" Color="#B3392B" />
+        <SolidColorBrush x:Key="TaktMutedBrush" Color="#8A93A3" />
+        <SolidColorBrush x:Key="TaktPageBrush" Color="#F7F8FA" />
+        <SolidColorBrush x:Key="TaktRailBrush" Color="#F0F2F6" />
+        <SolidColorBrush x:Key="TaktRowSeparatorBrush" Color="#EEF0F4" />
+        <SolidColorBrush x:Key="TaktRunningBrush" Color="#2F8A50" />
+        <SolidColorBrush x:Key="TaktRunningSoftBrush" Color="#F3FAF4" />
+        <SolidColorBrush x:Key="TaktSecondaryBrush" Color="#5D6675" />
+        <SolidColorBrush x:Key="TaktTextBrush" Color="#1C2128" />
+        <SolidColorBrush x:Key="TaktWarningBorderBrush" Color="#F0DFBB" />
+        <SolidColorBrush x:Key="TaktWarningBrush" Color="#FBF3E4" />
+        <SolidColorBrush x:Key="TaktWarningTextBrush" Color="#8F5A08" />
+        <FontFamily x:Key="TaktMonoFontFamily">Consolas, DejaVu Sans Mono, monospace</FontFamily>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{StaticResource TaktCardBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource TaktCardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <Style Selector="Border.chip">
+            <Setter Property="Background" Value="{StaticResource TaktChipBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Border.chip > TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource TaktMonoFontFamily}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource TaktChipTextBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TaktTextBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.subtle">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TaktSecondaryBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.muted">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource TaktMutedBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource TaktSecondaryBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.ok">
+            <Setter Property="Foreground" Value="{StaticResource TaktRunningBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.warn">
+            <Setter Property="Foreground" Value="#B26A00" />
+        </Style>
+
+        <Style Selector="TextBlock.mono">
+            <Setter Property="FontFamily" Value="{StaticResource TaktMonoFontFamily}" />
+        </Style>
+
+        <Style Selector="Button.nav">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#3F4754" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+
+        <Style Selector="Button.nav.selected">
+            <Setter Property="Background" Value="{StaticResource TaktAccentSoftBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TaktAccentBrush}" />
+        </Style>
+
+        <Style Selector="Button.toolbar">
+            <Setter Property="Background" Value="{StaticResource TaktCardBrush}" />
+            <Setter Property="BorderBrush" Value="#DDE1E9" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource TaktAccentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#36459E" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.icon">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#E1E5EC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TaktSecondaryBrush}" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Width" Value="26" />
+        </Style>
+
+        <Style Selector="Button.segment">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TaktSecondaryBrush}" />
+            <Setter Property="Padding" Value="14,3" />
+        </Style>
+
+        <Style Selector="Button.segment.selected">
+            <Setter Property="Background" Value="{StaticResource TaktCardBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TaktTextBrush}" />
+        </Style>
+
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#E4CBC7" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TaktDangerBrush}" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.link">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TaktSecondaryBrush}" />
+            <Setter Property="Padding" Value="4,2" />
+        </Style>
     </Application.Styles>
 </Application>

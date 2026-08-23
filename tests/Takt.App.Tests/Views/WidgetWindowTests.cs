@@ -40,10 +40,11 @@ public class WidgetWindowTests
             new(timeEntries, timeProvider),
             new LiteDbTemplateRepository(tempDatabase.Database),
             timeEntries,
+            settings,
             timeProvider,
             new StubJiraClient());
 
-        var window = new WidgetWindow(viewModel, settings);
+        var window = new WidgetWindow(viewModel, settings, new());
         window.Show();
 
         window.Position.Should().Be(new PixelPoint(321, 45));
@@ -66,12 +67,13 @@ public class WidgetWindowTests
             trackingService,
             new LiteDbTemplateRepository(tempDatabase.Database),
             timeEntries,
+            settings,
             timeProvider,
             new StubJiraClient());
         trackingService.Start("Implement widget", "TEAM-1234");
         timeProvider.UtcNow = BaseTime.AddMinutes(5);
 
-        var window = new WidgetWindow(viewModel, settings);
+        var window = new WidgetWindow(viewModel, settings, new());
         window.Show();
         viewModel.Tick();
 

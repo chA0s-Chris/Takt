@@ -21,6 +21,7 @@ public class WidgetViewModelTests
     private static readonly DateTime BaseTime = new(2026, 8, 23, 9, 0, 0, DateTimeKind.Utc);
 
     private StubJiraClient _jiraClient;
+    private LiteDbSettingsRepository _settings;
     private TempDatabase _tempDatabase;
     private LiteDbTemplateRepository _templates;
     private LiteDbTimeEntryRepository _timeEntries;
@@ -40,7 +41,8 @@ public class WidgetViewModelTests
         };
         _trackingService = new(_timeEntries, _timeProvider);
         _jiraClient = new();
-        _viewModel = new(_trackingService, _templates, _timeEntries, _timeProvider, _jiraClient);
+        _settings = new(_tempDatabase.Database);
+        _viewModel = new(_trackingService, _templates, _timeEntries, _settings, _timeProvider, _jiraClient);
     }
 
     [TearDown]
@@ -237,12 +239,12 @@ public class WidgetViewModelTests
     public async Task IssueSearch_IgnoresQueriesShorterThanTwoCharacters()
     {
         _jiraClient.IsConfigured = true;
-        _viewModel.IssueSearchText = "t";
+        _viewModel.IssueSearch.SearchText = "t";
 
-        await _viewModel.RunIssueSearchAsync();
+        await _viewModel.IssueSearch.RunAsync();
 
-        _viewModel.IssueSearchResults.Should().BeEmpty();
-        _viewModel.IssueSearchStatus.Should().BeNull();
+        _viewModel.IssueSearch.Results.Should().BeEmpty();
+        _viewModel.IssueSearch.Status.Should().BeNull();
         _jiraClient.LastQuery.Should().BeNull();
     }
 
@@ -250,12 +252,12 @@ public class WidgetViewModelTests
     public async Task IssueSearch_ExplainsWhenJiraIsNotConfigured()
     {
         _jiraClient.IsConfigured = false;
-        _viewModel.IssueSearchText = "test";
+        _viewModel.IssueSearch.SearchText = "test";
 
-        await _viewModel.RunIssueSearchAsync();
+        await _viewModel.IssueSearch.RunAsync();
 
-        _viewModel.IssueSearchResults.Should().BeEmpty();
-        _viewModel.IssueSearchStatus.Should().Contain("not configured");
+        _viewModel.IssueSearch.Results.Should().BeEmpty();
+        _viewModel.IssueSearch.Status.Should().Contain("not configured");
         _jiraClient.LastQuery.Should().BeNull();
     }
 
@@ -268,24 +270,24 @@ public class WidgetViewModelTests
             new("TEAM-1234", "Create tests for XXX"),
             new("TEAM-2", "Test data generator")
         ];
-        _viewModel.IssueSearchText = "test";
+        _viewModel.IssueSearch.SearchText = "test";
 
-        await _viewModel.RunIssueSearchAsync();
+        await _viewModel.IssueSearch.RunAsync();
 
         _jiraClient.LastQuery.Should().Be("test");
-        _viewModel.IssueSearchResults.Select(i => i.Key).Should().Equal("TEAM-1234", "TEAM-2");
-        _viewModel.IssueSearchStatus.Should().BeNull();
+        _viewModel.IssueSearch.Results.Select(i => i.Key).Should().Equal("TEAM-1234", "TEAM-2");
+        _viewModel.IssueSearch.Status.Should().BeNull();
     }
 
     [Test]
     public async Task IssueSearch_ReportsAnEmptyResult()
     {
         _jiraClient.IsConfigured = true;
-        _viewModel.IssueSearchText = "nothing";
+        _viewModel.IssueSearch.SearchText = "nothing";
 
-        await _viewModel.RunIssueSearchAsync();
+        await _viewModel.IssueSearch.RunAsync();
 
-        _viewModel.IssueSearchStatus.Should().Be("No matching issues.");
+        _viewModel.IssueSearch.Status.Should().Be("No matching issues.");
     }
 
     [Test]

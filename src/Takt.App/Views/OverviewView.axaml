@@ -1,0 +1,192 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Takt.App.ViewModels"
+             x:Class="Takt.App.Views.OverviewView"
+             x:DataType="vm:OverviewViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.row">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.row:pointerover">
+            <Setter Property="Background" Value="#F4F6FA" />
+        </Style>
+        <Style Selector="Border.row.running">
+            <Setter Property="Background" Value="{StaticResource TaktRunningSoftBrush}" />
+        </Style>
+        <Style Selector="Border.row.running:pointerover">
+            <Setter Property="Background" Value="#EAF6ED" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="20,14,20,16">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="PreviousButton"
+                        Classes="toolbar"
+                        Width="28"
+                        Padding="0"
+                        HorizontalContentAlignment="Center"
+                        Command="{Binding PreviousPeriodCommand}"
+                        Content="‹"
+                        ToolTip.Tip="Previous" />
+                <Button x:Name="NextButton"
+                        Classes="toolbar"
+                        Width="28"
+                        Padding="0"
+                        HorizontalContentAlignment="Center"
+                        Command="{Binding NextPeriodCommand}"
+                        Content="›"
+                        ToolTip.Tip="Next" />
+                <Button Classes="toolbar"
+                        Command="{Binding GoToTodayCommand}"
+                        Content="Today" />
+                <TextBlock x:Name="RangeTitleText"
+                           Classes="title"
+                           Text="{Binding RangeTitle}"
+                           VerticalAlignment="Center"
+                           Margin="6,0,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                <Button Classes="toolbar"
+                        Command="{Binding NewEntryCommand}"
+                        Content="New entry" />
+                <Border Background="#E9EBF0" CornerRadius="6" Padding="2" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Classes="segment"
+                                Classes.selected="{Binding !IsWeekView}"
+                                Command="{Binding ShowDayCommand}"
+                                Content="Day" />
+                        <Button Classes="segment"
+                                Classes.selected="{Binding IsWeekView}"
+                                Command="{Binding ShowWeekCommand}"
+                                Content="Week" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+            <TextBlock Classes="subtle" VerticalAlignment="Center">
+                <Run Text="Tracked:" />
+                <Run Text="{Binding TotalText}" FontWeight="SemiBold" Foreground="{StaticResource TaktTextBrush}" />
+            </TextBlock>
+            <Border Background="#E8F5EC"
+                    CornerRadius="10"
+                    Padding="8,2"
+                    VerticalAlignment="Center"
+                    IsVisible="{Binding RunningStatusText, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <TextBlock x:Name="RunningStatusText"
+                           Classes="ok"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Text="{Binding RunningStatusText}" />
+            </Border>
+        </StackPanel>
+
+        <Border Grid.Row="2" Classes="card" ClipToBounds="True">
+            <DockPanel>
+                <Border DockPanel.Dock="Bottom"
+                        Background="#FAFBFC"
+                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                        BorderThickness="0,1,0,0"
+                        Padding="14,9">
+                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                        <TextBlock Classes="subtle" Text="Total" />
+                        <TextBlock Classes="subtle"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TaktTextBrush}"
+                                   Text="{Binding TotalText}" />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock x:Name="EmptyText"
+                           DockPanel.Dock="Top"
+                           Classes="subtle"
+                           Text="No entries yet — start tracking from the widget, or add one with “New entry”."
+                           Margin="14,16"
+                           IsVisible="{Binding IsEmpty}" />
+
+                <ScrollViewer>
+                    <ItemsControl x:Name="DayList" ItemsSource="{Binding Days}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DayGroupViewModel">
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          Background="#F7F8FA"
+                                          IsVisible="{Binding IsHeaderVisible}">
+                                        <TextBlock Grid.Column="0"
+                                                   Classes="subtle"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding HeaderText}"
+                                                   Margin="14,8" />
+                                        <TextBlock Grid.Column="1"
+                                                   Classes="subtle"
+                                                   Text="{Binding TotalText}"
+                                                   Margin="14,8" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Entries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:TimeEntryRowViewModel">
+                                                <Border Classes="row"
+                                                        Classes.running="{Binding IsRunning}"
+                                                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                                                        BorderThickness="0,1,0,0"
+                                                        DoubleTapped="OnRowDoubleTapped"
+                                                        Cursor="Hand">
+                                                    <Grid ColumnDefinitions="104,*,Auto,84,96"
+                                                          Height="42"
+                                                          Margin="14,0">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Classes="subtle"
+                                                                   Text="{Binding TimeRangeText}"
+                                                                   VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding TaskName}"
+                                                                   FontSize="13"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Margin="0,0,10,0" />
+                                                        <Border Grid.Column="2"
+                                                                Classes="chip"
+                                                                IsVisible="{Binding HasIssueKey}"
+                                                                Margin="0,0,10,0">
+                                                            <TextBlock Text="{Binding IssueKey}" />
+                                                        </Border>
+                                                        <TextBlock Grid.Column="2"
+                                                                   Classes="muted"
+                                                                   Text="no issue"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding !HasIssueKey}"
+                                                                   Margin="0,0,10,0" />
+                                                        <TextBlock Grid.Column="3"
+                                                                   Classes="mono"
+                                                                   Classes.ok="{Binding IsRunning}"
+                                                                   Text="{Binding DurationText}"
+                                                                   FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Right"
+                                                                   VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="4"
+                                                                   Classes="subtle"
+                                                                   Classes.ok="{Binding IsRunning}"
+                                                                   Classes.warn="{Binding IsModified}"
+                                                                   FontSize="11"
+                                                                   Text="{Binding StatusText}"
+                                                                   HorizontalAlignment="Right"
+                                                                   VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,177 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Takt.App.ViewModels"
+             x:Class="Takt.App.Views.TemplatesView"
+             x:DataType="vm:TemplatesViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.row">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.row:pointerover">
+            <Setter Property="Background" Value="#F4F6FA" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="20,14,20,16">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Classes="title" Text="Templates" />
+                <TextBlock Classes="subtle"
+                           Text="Starting a task from a template copies its name, issue key, and note." />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    x:Name="NewTemplateButton"
+                    Classes="primary"
+                    Content="New template"
+                    Command="{Binding NewTemplateCommand}"
+                    VerticalAlignment="Center" />
+        </Grid>
+
+        <Border Grid.Row="1"
+                Background="#EDF0FA"
+                BorderBrush="#D8DEF3"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="12,9"
+                Margin="0,0,0,10">
+            <TextBlock Classes="subtle"
+                       Foreground="#3D4A85"
+                       TextWrapping="Wrap"
+                       Text="Quarter rollover: duplicate a template and change its issue key — for example Meetings (Q2) → Meetings (Q3)." />
+        </Border>
+
+        <Border Grid.Row="2" Classes="card" ClipToBounds="True">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" IsVisible="{Binding HasArchived}">
+                    <Border Background="#FAFBFC"
+                            BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="8,4">
+                        <Button x:Name="ArchivedToggleButton"
+                                Classes="link"
+                                Content="{Binding ArchivedHeaderText}"
+                                Command="{Binding ToggleArchivedVisibleCommand}"
+                                HorizontalAlignment="Left" />
+                    </Border>
+                    <ItemsControl x:Name="ArchivedList"
+                                  ItemsSource="{Binding ArchivedTemplates}"
+                                  IsVisible="{Binding IsArchivedVisible}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TemplateRowViewModel">
+                                <Border Classes="row"
+                                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                                        BorderThickness="0,1,0,0">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" Height="40" Margin="14,0">
+                                        <TextBlock Grid.Column="0"
+                                                   Classes="subtle"
+                                                   Text="{Binding Name}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,0,10,0" />
+                                        <Border Grid.Column="1"
+                                                Classes="chip"
+                                                IsVisible="{Binding HasIssueKey}"
+                                                Margin="0,0,10,0">
+                                            <TextBlock Text="{Binding IssueKey}" />
+                                        </Border>
+                                        <Button Grid.Column="2"
+                                                Classes="toolbar"
+                                                Content="Restore"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding $parent[ItemsControl].((vm:TemplatesViewModel)DataContext).ToggleArchiveCommand}"
+                                                CommandParameter="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <TextBlock x:Name="EmptyText"
+                           DockPanel.Dock="Top"
+                           Classes="subtle"
+                           Text="No templates yet — create one for the work you track again and again."
+                           Margin="14,16"
+                           IsVisible="{Binding IsEmpty}" />
+
+                <ScrollViewer>
+                    <ItemsControl x:Name="TemplateList" ItemsSource="{Binding Templates}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TemplateRowViewModel">
+                                <Border Classes="row"
+                                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                                        BorderThickness="0,1,0,0"
+                                        DoubleTapped="OnRowDoubleTapped"
+                                        Cursor="Hand">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,180,Auto" Height="46" Margin="14,0">
+                                        <StackPanel Grid.Column="0"
+                                                    Orientation="Horizontal"
+                                                    Spacing="2"
+                                                    Margin="0,0,10,0">
+                                            <Button Classes="icon"
+                                                    Height="22"
+                                                    Width="22"
+                                                    Content="↑"
+                                                    ToolTip.Tip="Move up"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TemplatesViewModel)DataContext).MoveUpCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Classes="icon"
+                                                    Height="22"
+                                                    Width="22"
+                                                    Content="↓"
+                                                    ToolTip.Tip="Move down"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TemplatesViewModel)DataContext).MoveDownCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Name}"
+                                                   FontSize="13"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,0,10,0" />
+                                        <Border Grid.Column="2"
+                                                Classes="chip"
+                                                IsVisible="{Binding HasIssueKey}"
+                                                Margin="0,0,10,0">
+                                            <TextBlock Text="{Binding IssueKey}" />
+                                        </Border>
+                                        <TextBlock Grid.Column="2"
+                                                   Classes="muted"
+                                                   Text="no issue"
+                                                   VerticalAlignment="Center"
+                                                   IsVisible="{Binding !HasIssueKey}"
+                                                   Margin="0,0,10,0" />
+                                        <TextBlock Grid.Column="3"
+                                                   Classes="muted"
+                                                   Text="{Binding Note}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,0,10,0" />
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4">
+                                            <Button Classes="icon"
+                                                    Content="⧉"
+                                                    ToolTip.Tip="Duplicate"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TemplatesViewModel)DataContext).DuplicateCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Classes="icon"
+                                                    Content="✎"
+                                                    ToolTip.Tip="Edit"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TemplatesViewModel)DataContext).EditCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Classes="icon"
+                                                    Content="⊟"
+                                                    ToolTip.Tip="Archive"
+                                                    Command="{Binding $parent[ItemsControl].((vm:TemplatesViewModel)DataContext).ToggleArchiveCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

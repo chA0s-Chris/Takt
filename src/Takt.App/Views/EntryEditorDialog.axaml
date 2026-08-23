@@ -1,0 +1,165 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Takt.App.ViewModels"
+        xmlns:jira="using:Takt.Core.Jira"
+        x:Class="Takt.App.Views.EntryEditorDialog"
+        x:DataType="vm:EntryEditorViewModel"
+        Title="{Binding Title}"
+        Width="500"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource TaktCardBrush}">
+
+    <StackPanel Margin="20,16" Spacing="12">
+        <TextBlock Classes="title" Text="{Binding Title}" />
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Task name" />
+            <TextBox x:Name="TaskNameTextBox" Text="{Binding TaskName}" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Jira issue" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBox x:Name="IssueKeyTextBox"
+                         Text="{Binding IssueKey}"
+                         Width="140"
+                         PlaceholderText="TEAM-1234" />
+                <Button x:Name="IssueSearchButton" Classes="toolbar" Content="Search…">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <StackPanel Width="300" Spacing="6">
+                                <TextBox x:Name="IssueSearchTextBox"
+                                         Text="{Binding IssueSearch.SearchText}"
+                                         PlaceholderText="Search Jira issues…" />
+                                <ItemsControl ItemsSource="{Binding IssueSearch.Results}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="jira:JiraIssueSummary">
+                                            <Button HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Left"
+                                                    Background="Transparent"
+                                                    Padding="8,5"
+                                                    Command="{Binding $parent[ItemsControl].((vm:EntryEditorViewModel)DataContext).AssignIssueCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding Key}" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding Summary}"
+                                                               Opacity="0.65"
+                                                               MaxWidth="195"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Classes="muted"
+                                           Text="{Binding IssueSearch.Status}"
+                                           TextWrapping="Wrap"
+                                           IsVisible="{Binding IssueSearch.Status, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Button Classes="link"
+                        Content="Clear"
+                        Command="{Binding ClearIssueCommand}"
+                        IsVisible="{Binding IssueKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Note" />
+            <TextBox x:Name="NoteTextBox"
+                     Text="{Binding Note}"
+                     AcceptsReturn="True"
+                     Height="60"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="14">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="label" Text="Start" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <CalendarDatePicker x:Name="StartDatePicker"
+                                        SelectedDate="{Binding StartDate}"
+                                        Width="130" />
+                    <TextBox x:Name="StartTimeTextBox" Text="{Binding StartTimeText}" Width="70" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Spacing="4" IsEnabled="{Binding IsEndEditable}">
+                <TextBlock Classes="label" Text="End" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <CalendarDatePicker x:Name="EndDatePicker"
+                                        SelectedDate="{Binding EndDate}"
+                                        Width="130" />
+                    <TextBox x:Name="EndTimeTextBox" Text="{Binding EndTimeText}" Width="70" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Classes="subtle"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding DurationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <Run Text="=" />
+                <Run Text="{Binding DurationText}" FontWeight="SemiBold" Foreground="{StaticResource TaktTextBrush}" />
+            </TextBlock>
+            <TextBlock Classes="subtle ok"
+                       Text="This entry is still running; its end is set when you pause."
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding IsRunning}" />
+        </StackPanel>
+
+        <Border Background="{StaticResource TaktWarningBrush}"
+                BorderBrush="{StaticResource TaktWarningBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="10,7"
+                IsVisible="{Binding OverlapWarning, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock x:Name="OverlapWarningText"
+                       FontSize="12"
+                       Foreground="{StaticResource TaktWarningTextBrush}"
+                       Text="{Binding OverlapWarning}"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <TextBlock x:Name="ValidationErrorText"
+                   FontSize="12"
+                   Foreground="{StaticResource TaktDangerBrush}"
+                   Text="{Binding ValidationError}"
+                   TextWrapping="Wrap"
+                   IsVisible="{Binding ValidationError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,0">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="DeleteButton"
+                        Classes="danger"
+                        Content="Delete"
+                        Command="{Binding DeleteCommand}"
+                        IsVisible="{Binding IsDeletable}"
+                        IsEnabled="{Binding !IsDeleteConfirmationVisible}" />
+                <StackPanel Orientation="Horizontal"
+                            Spacing="8"
+                            IsVisible="{Binding IsDeleteConfirmationVisible}">
+                    <TextBlock Classes="subtle" Text="Delete for good?" VerticalAlignment="Center" />
+                    <Button x:Name="ConfirmDeleteButton"
+                            Classes="danger"
+                            Content="Yes, delete"
+                            Command="{Binding ConfirmDeleteCommand}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <Button Classes="toolbar"
+                        Height="30"
+                        Content="Cancel"
+                        Command="{Binding CancelCommand}" />
+                <Button x:Name="SaveButton"
+                        Classes="primary"
+                        Content="Save"
+                        IsDefault="True"
+                        Command="{Binding SaveCommand}" />
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</Window>

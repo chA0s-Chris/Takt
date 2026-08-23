@@ -81,10 +81,10 @@
                             <Flyout Placement="BottomEdgeAlignedLeft">
                                 <StackPanel Width="270" Spacing="6">
                                     <TextBox x:Name="IssueSearchTextBox"
-                                             Text="{Binding IssueSearchText}"
+                                             Text="{Binding IssueSearch.SearchText}"
                                              PlaceholderText="Search Jira issues…" />
                                     <ItemsControl x:Name="IssueSearchList"
-                                                  ItemsSource="{Binding IssueSearchResults}">
+                                                  ItemsSource="{Binding IssueSearch.Results}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="jira:JiraIssueSummary">
                                                 <Button HorizontalAlignment="Stretch"
@@ -106,8 +106,8 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                     <TextBlock x:Name="IssueSearchStatusText"
-                                               Text="{Binding IssueSearchStatus}"
-                                               IsVisible="{Binding IssueSearchStatus, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                               Text="{Binding IssueSearch.Status}"
+                                               IsVisible="{Binding IssueSearch.Status, Converter={x:Static ObjectConverters.IsNotNull}}"
                                                FontSize="11"
                                                Opacity="0.7"
                                                TextWrapping="Wrap" />

@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Takt.App.Services;
 using Takt.App.ViewModels;
 using Takt.Core.Storage;
 
@@ -27,12 +28,15 @@ public sealed partial class WidgetWindow : Window
     /// <summary>Creates the widget window.</summary>
     /// <param name="viewModel">The view model driving the widget.</param>
     /// <param name="settings">The settings repository the window position is persisted in.</param>
-    public WidgetWindow(WidgetViewModel viewModel, ISettingsRepository settings)
+    /// <param name="notifier">The notifier announcing changed widget preferences.</param>
+    public WidgetWindow(WidgetViewModel viewModel, ISettingsRepository settings, SettingsNotifier notifier)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(notifier);
         _viewModel = viewModel;
         _settings = settings;
+        notifier.Changed += (_, _) => ApplySettings();
         DataContext = viewModel;
         InitializeComponent();
 
@@ -59,19 +63,19 @@ public sealed partial class WidgetWindow : Window
         _issueSearchTimer.Tick += (_, _) =>
         {
             _issueSearchTimer.Stop();
-            _ = _viewModel.RunIssueSearchAsync();
+            _ = _viewModel.IssueSearch.RunAsync();
         };
-        _viewModel.PropertyChanged += (_, e) =>
+
+        _viewModel.IssueAssigned += (_, _) => IssueButton.Flyout?.Hide();
+        _viewModel.SwitchCompleted += (_, _) => SwitchButton.Flyout?.Hide();
+        _viewModel.IssueSearch.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(WidgetViewModel.IssueSearchText))
+            if (e.PropertyName == nameof(JiraIssueSearchViewModel.SearchText))
             {
                 _issueSearchTimer.Stop();
                 _issueSearchTimer.Start();
             }
         };
-
-        _viewModel.IssueAssigned += (_, _) => IssueButton.Flyout?.Hide();
-        _viewModel.SwitchCompleted += (_, _) => SwitchButton.Flyout?.Hide();
         PositionChanged += (_, _) =>
         {
             if (IsVisible)
@@ -99,6 +103,7 @@ public sealed partial class WidgetWindow : Window
     {
         base.OnOpened(e);
         RestorePosition();
+        ApplySettings();
         _viewModel.Refresh();
         _tickTimer.Start();
     }
@@ -113,6 +118,30 @@ public sealed partial class WidgetWindow : Window
         {
             BeginMoveDrag(e);
         }
+    }
+
+    private void ApplySettings()
+    {
+        var settings = _settings.Get();
+        Topmost = settings.WidgetAlwaysOnTop;
+        if (settings is { WidgetPositionX: null, WidgetPositionY: null })
+        {
+            MoveToDefaultPosition();
+        }
+
+        _viewModel.Refresh();
+    }
+
+    private void MoveToDefaultPosition()
+    {
+        if (Screens.Primary is not { } screen)
+        {
+            return;
+        }
+
+        var workingArea = screen.WorkingArea;
+        var width = (Int32)(Bounds.Width * screen.Scaling);
+        Position = new(workingArea.X + Math.Max(0, workingArea.Width - width - 40), workingArea.Y + 40);
     }
 
     private void OnNewTaskKeyDown(Object? sender, KeyEventArgs e)

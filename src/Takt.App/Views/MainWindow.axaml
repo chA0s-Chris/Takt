@@ -1,10 +1,63 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Takt.App.ViewModels"
+        xmlns:views="using:Takt.App.Views"
         x:Class="Takt.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
         Title="Takt"
-        Width="800"
-        Height="500">
-    <TextBlock HorizontalAlignment="Center"
-               VerticalAlignment="Center"
-               Text="Takt — configuration and overviews land here in Milestone 3" />
+        Width="900"
+        Height="560"
+        MinWidth="720"
+        MinHeight="440"
+        Background="{StaticResource TaktPageBrush}">
+
+    <Grid ColumnDefinitions="152,*">
+        <Border Grid.Column="0"
+                Background="{StaticResource TaktRailBrush}"
+                BorderBrush="#E3E6EC"
+                BorderThickness="0,0,1,0">
+            <DockPanel Margin="8,12">
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Takt"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Margin="10,4,0,14" />
+                <TextBlock DockPanel.Dock="Bottom"
+                           Classes="muted"
+                           Text="{Binding VersionText}"
+                           Margin="10,8" />
+                <StackPanel Spacing="2" VerticalAlignment="Top">
+                    <Button x:Name="OverviewNavButton"
+                            Classes="nav"
+                            Classes.selected="{Binding IsOverviewSelected}"
+                            Command="{Binding ShowOverviewCommand}"
+                            Content="Overview" />
+                    <Button x:Name="TemplatesNavButton"
+                            Classes="nav"
+                            Classes.selected="{Binding IsTemplatesSelected}"
+                            Command="{Binding ShowTemplatesCommand}"
+                            Content="Templates" />
+                    <Button x:Name="SettingsNavButton"
+                            Classes="nav"
+                            Classes.selected="{Binding IsSettingsSelected}"
+                            Command="{Binding ShowSettingsCommand}"
+                            Content="Settings" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <ContentControl Grid.Column="1" Content="{Binding CurrentPage}">
+            <ContentControl.DataTemplates>
+                <DataTemplate DataType="vm:OverviewViewModel">
+                    <views:OverviewView />
+                </DataTemplate>
+                <DataTemplate DataType="vm:TemplatesViewModel">
+                    <views:TemplatesView />
+                </DataTemplate>
+                <DataTemplate DataType="vm:SettingsViewModel">
+                    <views:SettingsView />
+                </DataTemplate>
+            </ContentControl.DataTemplates>
+        </ContentControl>
+    </Grid>
 </Window>

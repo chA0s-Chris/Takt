@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Takt.App.ViewModels"
+             x:Class="Takt.App.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.error">
+            <Setter Property="Foreground" Value="{StaticResource TaktDangerBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="20,14,20,16" Spacing="12">
+            <TextBlock Classes="title" Text="Settings" />
+
+            <Border Classes="card" Padding="16,14">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Jira Cloud" FontSize="13" FontWeight="SemiBold" />
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,0,0,0">
+                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4" Margin="0,0,14,10">
+                            <TextBlock Classes="label" Text="Base URL" />
+                            <TextBox x:Name="BaseUrlTextBox"
+                                     Text="{Binding JiraBaseUrl}"
+                                     PlaceholderText="https://your-team.atlassian.net" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4" Margin="0,0,0,10">
+                            <TextBlock Classes="label" Text="E-mail" />
+                            <TextBox x:Name="EmailTextBox"
+                                     Text="{Binding JiraEmail}"
+                                     PlaceholderText="you@example.com" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,0,14,0">
+                            <TextBlock Classes="label" Text="API token" />
+                            <TextBox x:Name="TokenTextBox"
+                                     Text="{Binding ApiToken}"
+                                     PasswordChar="●"
+                                     PlaceholderText="{Binding TokenPlaceholder}" />
+                            <TextBlock Classes="muted" Text="{Binding TokenHint}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="8" VerticalAlignment="Top">
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,17,0,0">
+                                <Button x:Name="SaveButton"
+                                        Classes="primary"
+                                        Content="Save"
+                                        Command="{Binding SaveCommand}" />
+                                <Button x:Name="TestConnectionButton"
+                                        Classes="toolbar"
+                                        Height="30"
+                                        Content="Save and test"
+                                        Command="{Binding TestConnectionCommand}" />
+                                <TextBlock Classes="subtle"
+                                           Text="{Binding SaveStatus}"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding SaveStatus, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            </StackPanel>
+                            <TextBlock x:Name="ConnectionStatusText"
+                                       Classes="subtle"
+                                       Classes.ok="{Binding IsConnectionSuccessful}"
+                                       Classes.error="{Binding IsConnectionFailed}"
+                                       Text="{Binding ConnectionStatus}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding ConnectionStatus, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card" Padding="16,14">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Widget" FontSize="13" FontWeight="SemiBold" />
+                    <CheckBox x:Name="AlwaysOnTopCheckBox"
+                              IsChecked="{Binding WidgetAlwaysOnTop}"
+                              Content="Keep the widget always on top" />
+                    <CheckBox x:Name="ShowIssueKeyCheckBox"
+                              IsChecked="{Binding WidgetShowIssueKey}"
+                              Content="Show the Jira issue key on the widget" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="ResetPositionButton"
+                                Classes="toolbar"
+                                Content="Reset widget position"
+                                Command="{Binding ResetWidgetPositionCommand}" />
+                        <TextBlock Classes="muted"
+                                   Text="{Binding WidgetPositionText}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Classes="muted" Text="{Binding DataPathText}" TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

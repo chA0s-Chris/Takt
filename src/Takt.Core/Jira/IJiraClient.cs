@@ -23,4 +23,12 @@ public interface IJiraClient
     /// <exception cref="InvalidOperationException">Thrown when Jira is not configured.</exception>
     /// <exception cref="HttpRequestException">Thrown when the request fails or Jira rejects it.</exception>
     Task<IReadOnlyList<JiraIssueSummary>> SearchIssuesAsync(String query, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verifies the stored configuration against Jira and reports the outcome. Never
+    /// throws for an unreachable or rejecting server; the failure is part of the result.
+    /// </summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>The outcome of the connection test.</returns>
+    Task<JiraConnectionResult> TestConnectionAsync(CancellationToken cancellationToken = default);
 }

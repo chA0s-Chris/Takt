@@ -95,25 +95,30 @@ one runnable binary.
 **Done when:** a full day can be tracked end-to-end from the widget alone, entries
 land correctly in LiteDB, and killing/restarting the app recovers the open entry.
 
-## Milestone 3 — Main window: overview, editing, templates, settings
+## Milestone 3 — Main window: overview, editing, templates, settings ✅
 
-- Entry overview with day/week navigation; per-day totals.
+- Entry overview with day/week navigation; per-day totals; the running entry counts up.
 - Create/edit/delete entries: times (local-time UI, UTC storage), task name, note,
-  issue key. Editing a `Synced` entry flips it to `LocallyModified`.
-  Overlap detection warns but does not block.
+  issue key (with the same Jira text search as the widget). Editing a `Synced` entry
+  flips it to `LocallyModified`. Overlap detection warns but does not block.
 - Template CRUD + *duplicate* (the quarterly cycle: duplicate "Meetings (Q2)",
-  rename, change issue key).
-- Settings: Jira base URL + email (LiteDB), API token via `ICredentialStore`. Widget
-  preferences. (Both credential store implementations and a minimal tray-menu Jira
-  settings dialog already shipped with the widget issue search.)
+  rename, change issue key), archive/restore, and ordering.
+- Settings: Jira base URL + email (LiteDB), API token via `ICredentialStore`,
+  connection test against `/rest/api/3/myself`. Widget preferences (always on top,
+  show issue key, reset position) apply live through a `SettingsNotifier`.
 
-**Done when:** all tracked data is viewable and editable; templates drive the
-widget's quick-switch; token round-trips through the credential store on both OSes.
+Deviations from the design canvas, deliberate:
+
+- The navigation rail carries Overview / Templates / Settings; *Sync* arrives with
+  Milestone 4 rather than as a dead entry.
+- Icons are text glyphs instead of the drawn SVG set, and template ordering uses
+  ↑/↓ buttons instead of drag handles.
+- The application pins the light theme; the widget stays hand-coloured dark.
 
 ## Milestone 4 — Jira sync
 
-- `JiraCloudClient` (REST v3, Basic auth email:token; issue-picker text search
-  already shipped with the widget):
+- `JiraCloudClient` (REST v3, Basic auth email:token; issue-picker text search and
+  the connection test already shipped):
   - `GET /rest/api/3/issue/{key}?fields=summary` — validate keys, cache summaries locally;
   - `POST /rest/api/3/issue/{key}/worklog` — push (`started`, `timeSpentSeconds`, comment from note);
   - `PUT .../worklog/{id}` — re-push `LocallyModified` entries.
