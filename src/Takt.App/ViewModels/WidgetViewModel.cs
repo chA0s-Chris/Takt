@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using Takt.Core.Domain;
+using Takt.Core.Jira;
 using Takt.Core.Storage;
 using Takt.Core.Tracking;
 
@@ -19,9 +20,12 @@ using Takt.Core.Tracking;
 public sealed partial class WidgetViewModel : ObservableObject
 {
     private const Int32 MaxQuickSwitchItems = 8;
+    private const Int32 MinimumIssueSearchLength = 2;
     private const String NotTrackingText = "Not tracking";
+    private const String SetIssueText = "+ issue";
     private const String ZeroElapsedText = "00:00:00";
 
+    private readonly IJiraClient _jiraClient;
     private readonly ITemplateRepository _templates;
     private readonly ITimeEntryRepository _timeEntries;
     private readonly TimeProvider _timeProvider;
@@ -47,7 +51,21 @@ public sealed partial class WidgetViewModel : ObservableObject
     private String _elapsedText = ZeroElapsedText;
 
     [ObservableProperty]
+    private Boolean _isIssueButtonVisible;
+
+    [ObservableProperty]
     private Boolean _isTracking;
+
+    [ObservableProperty]
+    private String _issueButtonText = SetIssueText;
+
+    private CancellationTokenSource? _issueSearchCancellation;
+
+    [ObservableProperty]
+    private String? _issueSearchStatus;
+
+    [ObservableProperty]
+    private String? _issueSearchText;
 
     private TimeEntry? _lastEntry;
 
@@ -60,27 +78,37 @@ public sealed partial class WidgetViewModel : ObservableObject
     /// <param name="templates">The template repository feeding the quick-switch list.</param>
     /// <param name="timeEntries">The entry repository feeding the recent tasks.</param>
     /// <param name="timeProvider">The clock used to render the elapsed time.</param>
+    /// <param name="jiraClient">The Jira client used for the issue search.</param>
     public WidgetViewModel(
         TrackingService trackingService,
         ITemplateRepository templates,
         ITimeEntryRepository timeEntries,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IJiraClient jiraClient)
     {
         ArgumentNullException.ThrowIfNull(trackingService);
         ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(timeEntries);
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(jiraClient);
         _trackingService = trackingService;
         _templates = templates;
         _timeEntries = timeEntries;
         _timeProvider = timeProvider;
+        _jiraClient = jiraClient;
 
         _trackingService.TrackingChanged += (_, _) => Refresh();
         Refresh();
     }
 
+    /// <summary>Raised after a Jira issue was assigned, so the view can close the search flyout.</summary>
+    public event EventHandler? IssueAssigned;
+
     /// <summary>Raised after a quick-switch or new-task start, so the view can close the flyout.</summary>
     public event EventHandler? SwitchCompleted;
+
+    /// <summary>The results of the current Jira issue search.</summary>
+    public ObservableCollection<JiraIssueSummary> IssueSearchResults { get; } = new();
 
     /// <summary>The quick-switch entries: active templates first, then distinct recent tasks.</summary>
     public ObservableCollection<QuickSwitchItem> QuickSwitchItems { get; } = new();
@@ -99,9 +127,66 @@ public sealed partial class WidgetViewModel : ObservableObject
         CurrentTaskName = displayEntry?.TaskName ?? NotTrackingText;
         CurrentIssueKey = displayEntry?.JiraIssueKey;
         CanResume = _lastEntry is not null;
+        IsIssueButtonVisible = displayEntry is not null;
+        IssueButtonText = displayEntry?.JiraIssueKey ?? SetIssueText;
         RecomputeCompletedToday(displayEntry);
         Tick();
         LoadQuickSwitchItems();
+    }
+
+    /// <summary>
+    /// Runs the Jira issue search for the current <see cref="IssueSearchText"/>.
+    /// Called by the view after a short typing pause; a newer search cancels the
+    /// previous one.
+    /// </summary>
+    public async Task RunIssueSearchAsync()
+    {
+        _issueSearchCancellation?.Cancel();
+        _issueSearchCancellation?.Dispose();
+        _issueSearchCancellation = new();
+        var cancellationToken = _issueSearchCancellation.Token;
+
+        var query = IssueSearchText?.Trim();
+        if (query is null || query.Length < MinimumIssueSearchLength)
+        {
+            IssueSearchResults.Clear();
+            IssueSearchStatus = null;
+            return;
+        }
+
+        if (!_jiraClient.IsConfigured)
+        {
+            IssueSearchResults.Clear();
+            IssueSearchStatus = "Jira is not configured yet — open \"Jira settings\" in the tray menu.";
+            return;
+        }
+
+        IssueSearchStatus = "Searching…";
+        try
+        {
+            var issues = await _jiraClient.SearchIssuesAsync(query, cancellationToken);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            IssueSearchResults.Clear();
+            foreach (var issue in issues)
+            {
+                IssueSearchResults.Add(issue);
+            }
+
+            IssueSearchStatus = issues.Count == 0 ? "No matching issues." : null;
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer search.
+        }
+        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
+        {
+            IssueSearchResults.Clear();
+            IssueSearchStatus = "Search failed — check the Jira settings and your connection.";
+        }
     }
 
     /// <summary>
@@ -136,6 +221,34 @@ public sealed partial class WidgetViewModel : ObservableObject
         }
 
         return $"{(Int32)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}";
+    }
+
+    [RelayCommand]
+    private void AssignIssue(JiraIssueSummary? issue)
+    {
+        if (issue is null)
+        {
+            return;
+        }
+
+        var entry = _currentEntry ?? _lastEntry;
+        if (entry is null)
+        {
+            return;
+        }
+
+        entry.JiraIssueKey = issue.Key;
+        if (entry.SyncState == SyncState.Synced)
+        {
+            entry.SyncState = SyncState.LocallyModified;
+        }
+
+        _timeEntries.Update(entry);
+        IssueSearchText = null;
+        IssueSearchResults.Clear();
+        IssueSearchStatus = null;
+        Refresh();
+        IssueAssigned?.Invoke(this, EventArgs.Empty);
     }
 
     private Boolean CanStartNewTask() => !String.IsNullOrWhiteSpace(NewTaskName);

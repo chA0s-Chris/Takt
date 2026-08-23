@@ -4,6 +4,7 @@ namespace Takt.App.Tests.ViewModels;
 
 using FluentAssertions;
 using NUnit.Framework;
+using Takt.App.Tests.TestSupport;
 using Takt.App.ViewModels;
 using Takt.Core.Storage;
 using Takt.Core.Tests.TestSupport;
@@ -11,13 +12,15 @@ using Takt.Core.Tracking;
 
 /// <summary>
 /// Sociable unit tests: the view model runs against the real tracking service and
-/// LiteDB repositories on a temporary database file; only the clock is a test double.
+/// LiteDB repositories on a temporary database file; only the clock and the Jira
+/// client are test doubles.
 /// </summary>
 [TestFixture]
 public class WidgetViewModelTests
 {
     private static readonly DateTime BaseTime = new(2026, 8, 23, 9, 0, 0, DateTimeKind.Utc);
 
+    private StubJiraClient _jiraClient;
     private TempDatabase _tempDatabase;
     private LiteDbTemplateRepository _templates;
     private LiteDbTimeEntryRepository _timeEntries;
@@ -36,7 +39,8 @@ public class WidgetViewModelTests
             UtcNow = BaseTime
         };
         _trackingService = new(_timeEntries, _timeProvider);
-        _viewModel = new(_trackingService, _templates, _timeEntries, _timeProvider);
+        _jiraClient = new();
+        _viewModel = new(_trackingService, _templates, _timeEntries, _timeProvider, _jiraClient);
     }
 
     [TearDown]
@@ -227,5 +231,100 @@ public class WidgetViewModelTests
         _trackingService.SwitchTo("Review");
 
         _viewModel.QuickSwitchItems.Select(i => i.Name).Should().Equal("Bugfix");
+    }
+
+    [Test]
+    public async Task IssueSearch_IgnoresQueriesShorterThanTwoCharacters()
+    {
+        _jiraClient.IsConfigured = true;
+        _viewModel.IssueSearchText = "t";
+
+        await _viewModel.RunIssueSearchAsync();
+
+        _viewModel.IssueSearchResults.Should().BeEmpty();
+        _viewModel.IssueSearchStatus.Should().BeNull();
+        _jiraClient.LastQuery.Should().BeNull();
+    }
+
+    [Test]
+    public async Task IssueSearch_ExplainsWhenJiraIsNotConfigured()
+    {
+        _jiraClient.IsConfigured = false;
+        _viewModel.IssueSearchText = "test";
+
+        await _viewModel.RunIssueSearchAsync();
+
+        _viewModel.IssueSearchResults.Should().BeEmpty();
+        _viewModel.IssueSearchStatus.Should().Contain("not configured");
+        _jiraClient.LastQuery.Should().BeNull();
+    }
+
+    [Test]
+    public async Task IssueSearch_PopulatesTheResults()
+    {
+        _jiraClient.IsConfigured = true;
+        _jiraClient.Results =
+        [
+            new("TEAM-1234", "Create tests for XXX"),
+            new("TEAM-2", "Test data generator")
+        ];
+        _viewModel.IssueSearchText = "test";
+
+        await _viewModel.RunIssueSearchAsync();
+
+        _jiraClient.LastQuery.Should().Be("test");
+        _viewModel.IssueSearchResults.Select(i => i.Key).Should().Equal("TEAM-1234", "TEAM-2");
+        _viewModel.IssueSearchStatus.Should().BeNull();
+    }
+
+    [Test]
+    public async Task IssueSearch_ReportsAnEmptyResult()
+    {
+        _jiraClient.IsConfigured = true;
+        _viewModel.IssueSearchText = "nothing";
+
+        await _viewModel.RunIssueSearchAsync();
+
+        _viewModel.IssueSearchStatus.Should().Be("No matching issues.");
+    }
+
+    [Test]
+    public void AssignIssueCommand_SetsTheIssueOnTheRunningEntry()
+    {
+        var issueAssignedCount = 0;
+        _viewModel.IssueAssigned += (_, _) => issueAssignedCount++;
+        _trackingService.Start("Implement widget");
+
+        _viewModel.AssignIssueCommand.Execute(new("TEAM-1234", "Create tests for XXX"));
+
+        var openEntry = _timeEntries.GetOpenEntry();
+        openEntry.Should().NotBeNull();
+        openEntry.JiraIssueKey.Should().Be("TEAM-1234");
+        _viewModel.CurrentIssueKey.Should().Be("TEAM-1234");
+        _viewModel.IssueButtonText.Should().Be("TEAM-1234");
+        issueAssignedCount.Should().Be(1);
+    }
+
+    [Test]
+    public void AssignIssueCommand_SetsTheIssueOnThePausedEntry()
+    {
+        _trackingService.Start("Implement widget");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(25);
+        _viewModel.PauseCommand.Execute(null);
+
+        _viewModel.AssignIssueCommand.Execute(new("TEAM-1234", "Create tests for XXX"));
+
+        var storedEntry = _timeEntries.GetMostRecent(1).Single();
+        storedEntry.JiraIssueKey.Should().Be("TEAM-1234");
+        _viewModel.IssueButtonText.Should().Be("TEAM-1234");
+    }
+
+    [Test]
+    public void IssueButton_ShowsAPlaceholderWithoutAnIssue()
+    {
+        _trackingService.Start("Implement widget");
+
+        _viewModel.IsIssueButtonVisible.Should().BeTrue();
+        _viewModel.IssueButtonText.Should().Be("+ issue");
     }
 }

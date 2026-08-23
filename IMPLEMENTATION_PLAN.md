@@ -14,6 +14,7 @@ manual push of worklogs to Jira Cloud.
 | Jira          | Jira Cloud REST v3, email + API token, manual push-with-review           |
 | Credentials   | `ICredentialStore`: Windows Credential Manager (P/Invoke) on Windows, AES-encrypted file (per-user key, `0600`) on Linux |
 | Scope         | Purely per-user. Deferred: idle detection, worklog rounding, shared templates, reporting |
+| Interaction   | Widget-first: tracking, pause/resume, switching, and Jira issue assignment (text search over keys and titles) happen in the widget; the main window is for review, editing, templates, and pushing worklogs |
 
 ## Solution layout
 
@@ -102,15 +103,17 @@ land correctly in LiteDB, and killing/restarting the app recovers the open entry
   Overlap detection warns but does not block.
 - Template CRUD + *duplicate* (the quarterly cycle: duplicate "Meetings (Q2)",
   rename, change issue key).
-- Settings: Jira base URL + email (LiteDB), API token via `ICredentialStore`;
-  both store implementations land here. Widget preferences.
+- Settings: Jira base URL + email (LiteDB), API token via `ICredentialStore`. Widget
+  preferences. (Both credential store implementations and a minimal tray-menu Jira
+  settings dialog already shipped with the widget issue search.)
 
 **Done when:** all tracked data is viewable and editable; templates drive the
 widget's quick-switch; token round-trips through the credential store on both OSes.
 
 ## Milestone 4 — Jira sync
 
-- `JiraCloudClient` (REST v3, Basic auth email:token):
+- `JiraCloudClient` (REST v3, Basic auth email:token; issue-picker text search
+  already shipped with the widget):
   - `GET /rest/api/3/issue/{key}?fields=summary` — validate keys, cache summaries locally;
   - `POST /rest/api/3/issue/{key}/worklog` — push (`started`, `timeSpentSeconds`, comment from note);
   - `PUT .../worklog/{id}` — re-push `LocallyModified` entries.

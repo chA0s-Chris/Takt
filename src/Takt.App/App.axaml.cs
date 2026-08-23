@@ -12,7 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Takt.App.Services;
 using Takt.App.ViewModels;
 using Takt.App.Views;
+using Takt.Core.Jira;
 using Takt.Core.Platform;
+using Takt.Core.Security;
 using Takt.Core.Storage;
 using Takt.Core.Tracking;
 
@@ -23,6 +25,7 @@ using Takt.Core.Tracking;
 /// </summary>
 public sealed partial class App : Application
 {
+    private JiraSettingsDialog? _jiraSettingsDialog;
     private MainWindow? _mainWindow;
     private ServiceProvider? _serviceProvider;
     private TrayIcon? _trayIcon;
@@ -69,6 +72,11 @@ public sealed partial class App : Application
         services.AddSingleton<ITimeEntryRepository, LiteDbTimeEntryRepository>();
         services.AddSingleton<ITemplateRepository, LiteDbTemplateRepository>();
         services.AddSingleton<ISettingsRepository, LiteDbSettingsRepository>();
+        services.AddSingleton<ICredentialStore>(_ => OperatingSystem.IsWindows()
+                                                    ? new WindowsCredentialStore()
+                                                    : new EncryptedFileCredentialStore(dataDirectory));
+        services.AddSingleton(_ => new HttpClient());
+        services.AddSingleton<IJiraClient, JiraCloudClient>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<TrackingService>();
         services.AddSingleton<WidgetViewModel>();
@@ -108,12 +116,15 @@ public sealed partial class App : Application
         showWidgetItem.Click += (_, _) => ShowWidget();
         var openMainItem = new NativeMenuItem("Open Takt…");
         openMainItem.Click += (_, _) => ShowMainWindow();
+        var jiraSettingsItem = new NativeMenuItem("Jira settings…");
+        jiraSettingsItem.Click += (_, _) => ShowJiraSettings();
         var exitItem = new NativeMenuItem("Exit");
         exitItem.Click += (_, _) => Shutdown(desktop);
 
         var menu = new NativeMenu();
         menu.Items.Add(showWidgetItem);
         menu.Items.Add(openMainItem);
+        menu.Items.Add(jiraSettingsItem);
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(exitItem);
 
@@ -128,6 +139,26 @@ public sealed partial class App : Application
         {
             _trayIcon
         });
+    }
+
+    private void ShowJiraSettings()
+    {
+        if (_jiraSettingsDialog is { IsVisible: true })
+        {
+            _jiraSettingsDialog.Activate();
+            return;
+        }
+
+        if (_serviceProvider is not { } serviceProvider)
+        {
+            return;
+        }
+
+        _jiraSettingsDialog = new(
+            serviceProvider.GetRequiredService<ISettingsRepository>(),
+            serviceProvider.GetRequiredService<ICredentialStore>());
+        _jiraSettingsDialog.Closed += (_, _) => _jiraSettingsDialog = null;
+        _jiraSettingsDialog.Show();
     }
 
     private void ShowMainWindow()

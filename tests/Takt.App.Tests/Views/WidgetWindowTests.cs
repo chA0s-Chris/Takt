@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using FluentAssertions;
+using Takt.App.Tests.TestSupport;
 using Takt.App.ViewModels;
 using Takt.App.Views;
 using Takt.Core.Storage;
@@ -39,7 +40,8 @@ public class WidgetWindowTests
             new(timeEntries, timeProvider),
             new LiteDbTemplateRepository(tempDatabase.Database),
             timeEntries,
-            timeProvider);
+            timeProvider,
+            new StubJiraClient());
 
         var window = new WidgetWindow(viewModel, settings);
         window.Show();
@@ -64,7 +66,8 @@ public class WidgetWindowTests
             trackingService,
             new LiteDbTemplateRepository(tempDatabase.Database),
             timeEntries,
-            timeProvider);
+            timeProvider,
+            new StubJiraClient());
         trackingService.Start("Implement widget", "TEAM-1234");
         timeProvider.UtcNow = BaseTime.AddMinutes(5);
 

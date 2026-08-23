@@ -11,12 +11,14 @@ using Takt.App.ViewModels;
 using Takt.Core.Storage;
 
 /// <summary>
-/// The floating always-on-top widget: current task, live elapsed time, stop button,
-/// and the quick-switch flyout. Dragging anywhere outside a button moves the window;
-/// the position is persisted. Closing hides the widget instead of exiting.
+/// The floating always-on-top widget: current task, live elapsed time, pause/resume,
+/// the quick-switch flyout, and the Jira issue search. Dragging anywhere outside a
+/// button moves the window; the position is persisted. Closing hides the widget
+/// instead of exiting.
 /// </summary>
 public sealed partial class WidgetWindow : Window
 {
+    private readonly DispatcherTimer _issueSearchTimer;
     private readonly DispatcherTimer _savePositionTimer;
     private readonly ISettingsRepository _settings;
     private readonly DispatcherTimer _tickTimer;
@@ -50,6 +52,25 @@ public sealed partial class WidgetWindow : Window
             SavePosition();
         };
 
+        _issueSearchTimer = new()
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        _issueSearchTimer.Tick += (_, _) =>
+        {
+            _issueSearchTimer.Stop();
+            _ = _viewModel.RunIssueSearchAsync();
+        };
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(WidgetViewModel.IssueSearchText))
+            {
+                _issueSearchTimer.Stop();
+                _issueSearchTimer.Start();
+            }
+        };
+
+        _viewModel.IssueAssigned += (_, _) => IssueButton.Flyout?.Hide();
         _viewModel.SwitchCompleted += (_, _) => SwitchButton.Flyout?.Hide();
         PositionChanged += (_, _) =>
         {

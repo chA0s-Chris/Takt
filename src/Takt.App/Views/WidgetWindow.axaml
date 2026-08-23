@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Takt.App.ViewModels"
+        xmlns:jira="using:Takt.Core.Jira"
         x:Class="Takt.App.Views.WidgetWindow"
         x:DataType="vm:WidgetViewModel"
         Title="Takt"
@@ -32,6 +33,17 @@
         <Style Selector="TextBlock.elapsed.tracking">
             <Setter Property="Foreground" Value="#FF9FE870" />
         </Style>
+        <Style Selector="Button.issuelink">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="4,1" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+        <Style Selector="Button.issuelink:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33FFFFFF" />
+        </Style>
     </Window.Styles>
 
     <Border x:Name="RootBorder"
@@ -58,11 +70,51 @@
                                Text="{Binding ElapsedText}"
                                FontSize="19"
                                FontFamily="Consolas, DejaVu Sans Mono, monospace" />
-                    <TextBlock Text="{Binding CurrentIssueKey}"
-                               Foreground="#FF8FA1C0"
-                               FontSize="11"
-                               VerticalAlignment="Bottom"
-                               Margin="0,0,0,3" />
+                    <Button x:Name="IssueButton"
+                            Classes="issuelink"
+                            IsVisible="{Binding IsIssueButtonVisible}"
+                            ToolTip.Tip="Assign a Jira issue">
+                        <TextBlock Text="{Binding IssueButtonText}"
+                                   Foreground="#FF8FA1C0"
+                                   FontSize="11" />
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                <StackPanel Width="270" Spacing="6">
+                                    <TextBox x:Name="IssueSearchTextBox"
+                                             Text="{Binding IssueSearchText}"
+                                             PlaceholderText="Search Jira issues…" />
+                                    <ItemsControl x:Name="IssueSearchList"
+                                                  ItemsSource="{Binding IssueSearchResults}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="jira:JiraIssueSummary">
+                                                <Button HorizontalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Left"
+                                                        Background="Transparent"
+                                                        Padding="8,5"
+                                                        Command="{Binding $parent[ItemsControl].((vm:WidgetViewModel)DataContext).AssignIssueCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{Binding Key}"
+                                                                   FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding Summary}"
+                                                                   Opacity="0.65"
+                                                                   MaxWidth="175"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="IssueSearchStatusText"
+                                               Text="{Binding IssueSearchStatus}"
+                                               IsVisible="{Binding IssueSearchStatus, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                               FontSize="11"
+                                               Opacity="0.7"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
                     <TextBlock Text="Paused"
                                Foreground="#FFE8A33D"
                                FontSize="11"
