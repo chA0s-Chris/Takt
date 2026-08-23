@@ -4,6 +4,7 @@ namespace Takt.App.Tests.Views;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Headless.NUnit;
 using FluentAssertions;
 using Takt.App.ViewModels;
@@ -85,6 +86,9 @@ public class WidgetWindowTests
         var pauseButton = window.FindControl<Button>("PauseButton");
         pauseButton.Should().NotBeNull();
         pauseButton.IsVisible.Should().BeTrue();
+        // Two drawn bars, not a character: the pause glyph has no font to render it.
+        pauseButton.Content.Should().BeOfType<StackPanel>()
+                   .Which.Children.Should().AllBeOfType<Rectangle>().And.HaveCount(2);
         var resumeButton = window.FindControl<Button>("ResumeButton");
         resumeButton.Should().NotBeNull();
         resumeButton.IsVisible.Should().BeFalse();

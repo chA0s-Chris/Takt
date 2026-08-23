@@ -124,13 +124,19 @@
                 </StackPanel>
             </StackPanel>
 
+            <!-- The pause bars are drawn rather than typed: U+23F8 is missing from the
+                 bundled font and falls back to a tofu box. -->
             <Button x:Name="PauseButton"
                     Grid.Column="1"
                     Classes="widget"
                     Command="{Binding PauseCommand}"
                     IsVisible="{Binding IsTracking}"
-                    Content="⏸"
-                    ToolTip.Tip="Pause tracking" />
+                    ToolTip.Tip="Pause tracking">
+                <StackPanel Orientation="Horizontal" Spacing="3">
+                    <Rectangle Width="3" Height="12" RadiusX="1.5" RadiusY="1.5" Fill="White" />
+                    <Rectangle Width="3" Height="12" RadiusX="1.5" RadiusY="1.5" Fill="White" />
+                </StackPanel>
+            </Button>
 
             <Button x:Name="ResumeButton"
                     Grid.Column="1"
