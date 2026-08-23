@@ -139,7 +139,7 @@ public sealed partial class App : Application
 
         _trayIcon = new()
         {
-            Icon = new(AssetLoader.Open(new("avares://Takt.App/Assets/takt-icon.png"))),
+            Icon = new(AssetLoader.Open(new("avares://Takt/Assets/takt-icon.png"))),
             ToolTipText = "Takt",
             Menu = menu
         };

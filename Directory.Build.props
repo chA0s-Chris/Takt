@@ -12,4 +12,15 @@
     <NoWarn>1591</NoWarn>
     <PreferredUILang>en</PreferredUILang>
   </PropertyGroup>
+
+  <!-- The release workflow overrides Version from the tag it builds; the value here is
+       what a local build reports in the navigation rail. -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Product>Takt</Product>
+    <Authors>Christian Flessa</Authors>
+    <Company>Christian Flessa</Company>
+    <Copyright>Copyright (c) 2026 Christian Flessa</Copyright>
+    <RepositoryUrl>https://github.com/chA0s-Chris/Takt</RepositoryUrl>
+  </PropertyGroup>
 </Project>

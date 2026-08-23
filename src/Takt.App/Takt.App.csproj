@@ -3,6 +3,10 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+    <!-- The published file is what a user copies, so it is called Takt rather than
+         Takt.App. Resource URIs are addressed by assembly name: avares://Takt/… -->
+    <AssemblyName>Takt</AssemblyName>
+    <RootNamespace>Takt.App</RootNamespace>
     <!-- AVLN3001: windows are constructed with their dependencies via DI,
          not through the runtime XAML loader. -->
     <NoWarn>$(NoWarn);AVLN3001</NoWarn>
