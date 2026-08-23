@@ -3,7 +3,9 @@
 namespace Takt.App.Tests.Views;
 
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless.NUnit;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAssertions;
@@ -47,6 +49,23 @@ public class MainWindowTests
         dialog.FindControl<Button>("SaveButton")!.IsEnabled.Should().BeTrue();
 
         dialog.Close();
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_CentresTheNavigationLabelsInTheirButtons()
+    {
+        using var context = new TestContext();
+        var window = context.CreateWindow();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var navButton = window.FindControl<Button>("OverviewNavButton");
+        navButton.Should().NotBeNull();
+        var presenter = navButton.GetVisualDescendants().OfType<ContentPresenter>().First();
+        presenter.VerticalContentAlignment.Should().Be(VerticalAlignment.Center);
+        presenter.Bounds.Height.Should().BeApproximately(navButton.Bounds.Height, 1);
+
+        window.Hide();
     }
 
     [AvaloniaTest]
