@@ -153,13 +153,28 @@ reach into Jira.
 appear with correct start time and duration; a post-push edit re-syncs; failures
 surface per entry without corrupting local state.
 
-## Milestone 5 — Packaging & polish
+## Milestone 5 — Packaging & polish ✅
 
 - Verify single-file publish on both RIDs; smoke test on a Linux desktop
   (X11 expected fine; on Wayland accept compositor-managed placement).
 - Version stamping, app icon, README (install = copy the binary; where data lives;
   how to create a Jira API token).
-- Optional: GitHub Actions workflow producing both binaries per tag.
+- GitHub Actions: `ci.yml` builds and tests every push and pull request on Linux and
+  Windows; `release.yml` publishes both binaries for a `v*.*.*` tag and attaches them
+  to the release drafted by Release Drafter.
+
+Notes:
+
+- The published file is called `Takt`, not `Takt.App` — it is what a user copies. The
+  assembly name doubles as the resource authority, so asset URIs read `avares://Takt/…`.
+- `Version` lives in `Directory.Build.props` and is what a local build shows in the
+  navigation rail; the release workflow overrides it from the tag it builds.
+- The Windows executable carries icon and version resources even though it is
+  cross-published from Linux.
+- The icon is derived from the existing 64×64 tray asset (`takt-icon.ico`, sizes 16 to
+  64). A 256×256 source would make the large Windows views crisp.
+- The binaries are unsigned: Windows SmartScreen warns on first launch. Signing needs a
+  certificate and is not worth it for an internal tool.
 
 **Done when:** a colleague can download one file, run it, configure Jira, and track.
 
