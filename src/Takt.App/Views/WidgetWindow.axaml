@@ -115,6 +115,37 @@
                             </Flyout>
                         </Button.Flyout>
                     </Button>
+                    <Button x:Name="NoteButton"
+                            Classes="issuelink"
+                            IsVisible="{Binding IsNoteButtonVisible}"
+                            ToolTip.Tip="Edit the note for this task">
+                        <TextBlock Text="{Binding NoteButtonText}"
+                                   Foreground="#FF8FA1C0"
+                                   FontSize="11"
+                                   MaxWidth="110"
+                                   TextTrimming="CharacterEllipsis" />
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                <StackPanel Width="270" Spacing="6">
+                                    <TextBlock Text="Note"
+                                               FontSize="11"
+                                               Opacity="0.6" />
+                                    <TextBox x:Name="NoteTextBox"
+                                             Text="{Binding NoteDraft}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             MinHeight="64"
+                                             MaxHeight="120"
+                                             PlaceholderText="Becomes the Jira worklog comment…"
+                                             KeyDown="OnNoteKeyDown" />
+                                    <Button x:Name="SaveNoteButton"
+                                            Content="Save"
+                                            HorizontalAlignment="Right"
+                                            Command="{Binding SaveNoteCommand}" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
                     <TextBlock Text="Paused"
                                Foreground="#FFE8A33D"
                                FontSize="11"

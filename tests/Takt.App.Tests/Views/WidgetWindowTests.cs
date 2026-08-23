@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 using FluentAssertions;
 using Takt.App.ViewModels;
 using Takt.App.Views;
@@ -92,6 +93,11 @@ public class WidgetWindowTests
         var resumeButton = window.FindControl<Button>("ResumeButton");
         resumeButton.Should().NotBeNull();
         resumeButton.IsVisible.Should().BeFalse();
+        var noteButton = window.FindControl<Button>("NoteButton");
+        noteButton.Should().NotBeNull();
+        noteButton.IsVisible.Should().BeTrue();
+        noteButton.Flyout.Should().NotBeNull();
+        noteButton.GetVisualDescendants().OfType<TextBlock>().Single().Text.Should().Be("+ note");
 
         window.Hide();
     }

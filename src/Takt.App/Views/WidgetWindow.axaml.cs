@@ -67,6 +67,7 @@ public sealed partial class WidgetWindow : Window
         };
 
         _viewModel.IssueAssigned += (_, _) => IssueButton.Flyout?.Hide();
+        _viewModel.NoteSaved += (_, _) => NoteButton.Flyout?.Hide();
         _viewModel.SwitchCompleted += (_, _) => SwitchButton.Flyout?.Hide();
         _viewModel.IssueSearch.PropertyChanged += (_, e) =>
         {
@@ -149,6 +150,24 @@ public sealed partial class WidgetWindow : Window
         if (e.Key == Key.Enter && _viewModel.StartNewTaskCommand.CanExecute(null))
         {
             _viewModel.StartNewTaskCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Enter saves the note, Shift+Enter starts a new line: the box accepts returns
+    /// because a note may have several lines, but saving should not need the mouse.
+    /// </summary>
+    private void OnNoteKeyDown(Object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && !e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            _viewModel.SaveNoteCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            NoteButton.Flyout?.Hide();
             e.Handled = true;
         }
     }

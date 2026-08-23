@@ -5,6 +5,7 @@ namespace Takt.App.Tests.ViewModels;
 using FluentAssertions;
 using NUnit.Framework;
 using Takt.App.ViewModels;
+using Takt.Core.Domain;
 using Takt.Core.Storage;
 using Takt.Core.Tests.TestSupport;
 using Takt.Core.Tracking;
@@ -54,6 +55,64 @@ public class WidgetViewModelTests
         _viewModel.CurrentTaskName.Should().Be("Not tracking");
         _viewModel.ElapsedText.Should().Be("00:00:00");
         _viewModel.CanResume.Should().BeFalse();
+    }
+
+    [Test]
+    public void SaveNoteCommand_WritesTheNoteToTheRunningEntry()
+    {
+        _trackingService.Start("Investigate gateway timeouts", "TEAM-1187");
+        var saved = 0;
+        _viewModel.NoteSaved += (_, _) => saved++;
+
+        _viewModel.NoteDraft = "  Checked the gateway logs  ";
+        _viewModel.SaveNoteCommand.Execute(null);
+
+        _timeEntries.GetOpenEntry()!.Note.Should().Be("Checked the gateway logs");
+        _viewModel.NoteButtonText.Should().Be("Checked the gateway logs");
+        saved.Should().Be(1);
+    }
+
+    [Test]
+    public void SaveNoteCommand_ClearsANoteThatIsOnlyWhitespace()
+    {
+        _trackingService.Start("Investigate gateway timeouts", "TEAM-1187", "Checked the gateway logs");
+        _viewModel.Refresh();
+
+        _viewModel.NoteDraft = "   ";
+        _viewModel.SaveNoteCommand.Execute(null);
+
+        _timeEntries.GetOpenEntry()!.Note.Should().BeNull();
+        _viewModel.NoteButtonText.Should().Be("+ note");
+    }
+
+    [Test]
+    public void SaveNoteCommand_EditsThePausedTaskAndFlagsItAsModified()
+    {
+        _trackingService.Start("Investigate gateway timeouts", "TEAM-1187");
+        _viewModel.PauseCommand.Execute(null);
+        var entry = _timeEntries.GetMostRecent(1).Single();
+        entry.SyncState = SyncState.Synced;
+        entry.JiraWorklogId = "45001";
+        _timeEntries.Update(entry);
+        _viewModel.Refresh();
+
+        _viewModel.NoteDraft = "Logged the findings";
+        _viewModel.SaveNoteCommand.Execute(null);
+
+        var stored = _timeEntries.GetById(entry.Id)!;
+        stored.Note.Should().Be("Logged the findings");
+        stored.SyncState.Should().Be(SyncState.LocallyModified);
+    }
+
+    [Test]
+    public void SaveNoteCommand_DoesNothingWithoutATask()
+    {
+        _viewModel.IsNoteButtonVisible.Should().BeFalse();
+
+        _viewModel.NoteDraft = "Nowhere to put this";
+        _viewModel.SaveNoteCommand.Execute(null);
+
+        _timeEntries.GetMostRecent(1).Should().BeEmpty();
     }
 
     [Test]

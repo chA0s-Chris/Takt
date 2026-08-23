@@ -22,6 +22,7 @@ public sealed partial class WidgetViewModel : ObservableObject
     private const Int32 MaxQuickSwitchItems = 8;
     private const String NotTrackingText = "Not tracking";
     private const String SetIssueText = "+ issue";
+    private const String SetNoteText = "+ note";
     private const String ZeroElapsedText = "00:00:00";
 
     private readonly ISettingsRepository _settings;
@@ -53,6 +54,9 @@ public sealed partial class WidgetViewModel : ObservableObject
     private Boolean _isIssueButtonVisible;
 
     [ObservableProperty]
+    private Boolean _isNoteButtonVisible;
+
+    [ObservableProperty]
     private Boolean _isTracking;
 
     [ObservableProperty]
@@ -63,6 +67,12 @@ public sealed partial class WidgetViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(StartNewTaskCommand))]
     private String? _newTaskName;
+
+    [ObservableProperty]
+    private String _noteButtonText = SetNoteText;
+
+    [ObservableProperty]
+    private String? _noteDraft;
 
     /// <summary>Creates the view model and loads the current tracking state.</summary>
     /// <param name="trackingService">The tracking engine.</param>
@@ -99,6 +109,9 @@ public sealed partial class WidgetViewModel : ObservableObject
     /// <summary>Raised after a Jira issue was assigned, so the view can close the search flyout.</summary>
     public event EventHandler? IssueAssigned;
 
+    /// <summary>Raised after the note was saved, so the view can close the note flyout.</summary>
+    public event EventHandler? NoteSaved;
+
     /// <summary>Raised after a quick-switch or new-task start, so the view can close the flyout.</summary>
     public event EventHandler? SwitchCompleted;
 
@@ -125,6 +138,10 @@ public sealed partial class WidgetViewModel : ObservableObject
         CanResume = _lastEntry is not null;
         IsIssueButtonVisible = displayEntry is not null && _settings.Get().WidgetShowIssueKey;
         IssueButtonText = displayEntry?.JiraIssueKey ?? SetIssueText;
+        IsNoteButtonVisible = displayEntry is not null;
+        var note = displayEntry?.Note;
+        NoteDraft = note;
+        NoteButtonText = String.IsNullOrWhiteSpace(note) ? SetNoteText : note;
         RecomputeCompletedToday(displayEntry);
         Tick();
         LoadQuickSwitchItems();
@@ -236,6 +253,32 @@ public sealed partial class WidgetViewModel : ObservableObject
         }
 
         _trackingService.SwitchTo(lastEntry.TaskName, lastEntry.JiraIssueKey, lastEntry.Note);
+    }
+
+    /// <summary>
+    /// Writes the edited note to the displayed entry. The note becomes the worklog
+    /// comment, so it is worth capturing while the work is still fresh rather than
+    /// afterwards in the main window.
+    /// </summary>
+    [RelayCommand]
+    private void SaveNote()
+    {
+        var entry = _currentEntry ?? _lastEntry;
+        if (entry is null)
+        {
+            return;
+        }
+
+        var note = NoteDraft?.Trim();
+        entry.Note = String.IsNullOrEmpty(note) ? null : note;
+        if (entry.SyncState == SyncState.Synced)
+        {
+            entry.SyncState = SyncState.LocallyModified;
+        }
+
+        _timeEntries.Update(entry);
+        Refresh();
+        NoteSaved?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
