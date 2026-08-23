@@ -4,6 +4,7 @@
         xmlns:jira="using:Takt.Core.Jira"
         x:Class="Takt.App.Views.WidgetWindow"
         x:DataType="vm:WidgetViewModel"
+        Icon="/Assets/takt-icon.png"
         Title="Takt"
         WindowDecorations="None"
         Topmost="True"

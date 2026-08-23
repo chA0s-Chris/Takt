@@ -4,6 +4,7 @@
         xmlns:jira="using:Takt.Core.Jira"
         x:Class="Takt.App.Views.EntryEditorDialog"
         x:DataType="vm:EntryEditorViewModel"
+        Icon="/Assets/takt-icon.png"
         Title="{Binding Title}"
         Width="500"
         SizeToContent="Height"

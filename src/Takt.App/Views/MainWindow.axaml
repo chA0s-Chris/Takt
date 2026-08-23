@@ -4,6 +4,7 @@
         xmlns:views="using:Takt.App.Views"
         x:Class="Takt.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/takt-icon.png"
         Title="Takt"
         Width="900"
         Height="560"

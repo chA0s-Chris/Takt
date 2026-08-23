@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+    <!-- Windows takes the executable icon from here; the window and tray icons come
+         from the PNG next to it. -->
+    <ApplicationIcon>Assets/takt-icon.ico</ApplicationIcon>
     <!-- The published file is what a user copies, so it is called Takt rather than
          Takt.App. Resource URIs are addressed by assembly name: avares://Takt/… -->
     <AssemblyName>Takt</AssemblyName>
