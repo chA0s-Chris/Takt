@@ -2,6 +2,7 @@
 // This file is licensed under the MIT license. See LICENSE in the project root for more information.
 namespace Takt.App.Tests.Views;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.NUnit;
@@ -64,6 +65,35 @@ public class MainWindowTests
         var presenter = navButton.GetVisualDescendants().OfType<ContentPresenter>().First();
         presenter.VerticalContentAlignment.Should().Be(VerticalAlignment.Center);
         presenter.Bounds.Height.Should().BeApproximately(navButton.Bounds.Height, 1);
+
+        window.Hide();
+    }
+
+    [AvaloniaTest]
+    public void MainWindow_OpensCentredAndKeepsAMovedPosition()
+    {
+        using var context = new TestContext();
+        var window = context.CreateWindow();
+
+        window.ShowAndActivate();
+        Dispatcher.UIThread.RunJobs();
+
+        if (window.Screens.ScreenFromWindow(window) is { } screen)
+        {
+            var expected = screen.WorkingArea.Center;
+            var centre = window.Position + new PixelVector(
+                (Int32)(window.Bounds.Width / 2),
+                (Int32)(window.Bounds.Height / 2));
+            centre.X.Should().BeCloseTo(expected.X, 40);
+            centre.Y.Should().BeCloseTo(expected.Y, 40);
+        }
+
+        window.Position = new(120, 90);
+        window.Hide();
+        window.ShowAndActivate();
+        Dispatcher.UIThread.RunJobs();
+
+        window.Position.Should().Be(new PixelPoint(120, 90));
 
         window.Hide();
     }

@@ -9,6 +9,7 @@
         Height="560"
         MinWidth="720"
         MinHeight="440"
+        WindowStartupLocation="CenterScreen"
         Background="{StaticResource TaktPageBrush}">
 
     <Grid ColumnDefinitions="152,*">
