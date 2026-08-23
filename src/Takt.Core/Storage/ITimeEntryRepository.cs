@@ -27,6 +27,11 @@ public interface ITimeEntryRepository
     /// <returns>The entry, or <c>null</c> when it does not exist.</returns>
     TimeEntry? GetById(Guid id);
 
+    /// <summary>Returns the most recently started entries, newest first.</summary>
+    /// <param name="count">The maximum number of entries to return.</param>
+    /// <returns>The most recent entries.</returns>
+    IReadOnlyList<TimeEntry> GetMostRecent(Int32 count);
+
     /// <summary>Returns the currently running entry (no end time), or <c>null</c>.</summary>
     /// <returns>The open entry, or <c>null</c> when no timer is running.</returns>
     TimeEntry? GetOpenEntry();

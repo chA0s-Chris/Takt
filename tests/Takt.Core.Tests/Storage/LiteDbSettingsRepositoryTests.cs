@@ -39,7 +39,9 @@ public class LiteDbSettingsRepositoryTests
         var settings = new AppSettings
         {
             JiraBaseUrl = "https://example.atlassian.net",
-            JiraEmail = "chris@example.com"
+            JiraEmail = "chris@example.com",
+            WidgetPositionX = 1720,
+            WidgetPositionY = 40
         };
 
         _repository.Save(settings);

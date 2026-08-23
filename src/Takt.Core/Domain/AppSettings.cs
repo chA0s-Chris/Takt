@@ -16,4 +16,10 @@ public sealed class AppSettings
 
     /// <summary>The e-mail address used for Jira Basic authentication.</summary>
     public String? JiraEmail { get; set; }
+
+    /// <summary>The saved horizontal screen position of the floating widget.</summary>
+    public Int32? WidgetPositionX { get; set; }
+
+    /// <summary>The saved vertical screen position of the floating widget.</summary>
+    public Int32? WidgetPositionY { get; set; }
 }

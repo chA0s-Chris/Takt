@@ -105,6 +105,21 @@ public class LiteDbTimeEntryRepositoryTests
     }
 
     [Test]
+    public void GetMostRecent_ReturnsNewestEntriesFirstAndHonorsTheLimit()
+    {
+        var oldest = CreateClosedEntry(BaseTime);
+        var middle = CreateClosedEntry(BaseTime.AddHours(1));
+        var newest = CreateClosedEntry(BaseTime.AddHours(2));
+        _repository.Insert(middle);
+        _repository.Insert(oldest);
+        _repository.Insert(newest);
+
+        var result = _repository.GetMostRecent(2);
+
+        result.Select(x => x.Id).Should().Equal(newest.Id, middle.Id);
+    }
+
+    [Test]
     public void GetBetween_FiltersByStartTimeAndOrdersChronologically()
     {
         var second = CreateClosedEntry(BaseTime.AddHours(1));

@@ -3,6 +3,7 @@
 namespace Takt.App;
 
 using Avalonia;
+using Takt.App.Services;
 
 internal static class Program
 {
@@ -14,7 +15,16 @@ internal static class Program
                   .LogToTrace();
 
     [STAThread]
-    public static void Main(String[] args) =>
-        BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+    public static void Main(String[] args)
+    {
+        using var singleInstance = new SingleInstanceGuard();
+        if (!singleInstance.TryAcquire())
+        {
+            singleInstance.SignalRunningInstance();
+            return;
+        }
+
+        App.SingleInstance = singleInstance;
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+    }
 }

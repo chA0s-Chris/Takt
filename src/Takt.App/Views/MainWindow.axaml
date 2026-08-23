@@ -1,10 +1,10 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Takt.App.MainWindow"
+        x:Class="Takt.App.Views.MainWindow"
         Title="Takt"
         Width="800"
         Height="500">
     <TextBlock HorizontalAlignment="Center"
                VerticalAlignment="Center"
-               Text="Takt — Milestone 1 scaffold" />
+               Text="Takt — configuration and overviews land here in Milestone 3" />
 </Window>

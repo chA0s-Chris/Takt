@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+    <!-- AVLN3001: windows are constructed with their dependencies via DI,
+         not through the runtime XAML loader. -->
+    <NoWarn>$(NoWarn);AVLN3001</NoWarn>
   </PropertyGroup>
 
   <!-- Single self-contained executable. Never add PublishTrimmed or PublishAot:
@@ -25,10 +28,16 @@
   </Target>
 
   <ItemGroup>
+    <AvaloniaResource Include="Assets/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 
   <ItemGroup>

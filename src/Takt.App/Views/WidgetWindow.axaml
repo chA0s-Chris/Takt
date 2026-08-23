@@ -1,0 +1,125 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Takt.App.ViewModels"
+        x:Class="Takt.App.Views.WidgetWindow"
+        x:DataType="vm:WidgetViewModel"
+        Title="Takt"
+        WindowDecorations="None"
+        Topmost="True"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SizeToContent="WidthAndHeight"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent">
+
+    <Window.Styles>
+        <Style Selector="Button.widget">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="CornerRadius" Value="17" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.widget:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33FFFFFF" />
+        </Style>
+        <Style Selector="TextBlock.elapsed">
+            <Setter Property="Foreground" Value="#FF8FA1C0" />
+        </Style>
+        <Style Selector="TextBlock.elapsed.tracking">
+            <Setter Property="Foreground" Value="#FF9FE870" />
+        </Style>
+    </Window.Styles>
+
+    <Border x:Name="RootBorder"
+            Background="#F0222937"
+            CornerRadius="10"
+            Padding="14,8,8,8"
+            MinWidth="250">
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <StackPanel Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0">
+                <TextBlock x:Name="TaskNameText"
+                           Text="{Binding CurrentTaskName}"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           FontSize="13"
+                           MaxWidth="170"
+                           HorizontalAlignment="Left"
+                           TextTrimming="CharacterEllipsis" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock x:Name="ElapsedText"
+                               Classes="elapsed"
+                               Classes.tracking="{Binding IsTracking}"
+                               Text="{Binding ElapsedText}"
+                               FontSize="19"
+                               FontFamily="Consolas, DejaVu Sans Mono, monospace" />
+                    <TextBlock Text="{Binding CurrentIssueKey}"
+                               Foreground="#FF8FA1C0"
+                               FontSize="11"
+                               VerticalAlignment="Bottom"
+                               Margin="0,0,0,3" />
+                </StackPanel>
+            </StackPanel>
+
+            <Button x:Name="StopButton"
+                    Grid.Column="1"
+                    Classes="widget"
+                    Command="{Binding StopCommand}"
+                    IsVisible="{Binding IsTracking}"
+                    Content="⏹"
+                    ToolTip.Tip="Stop tracking" />
+
+            <Button x:Name="SwitchButton"
+                    Grid.Column="2"
+                    Classes="widget"
+                    Content="▾"
+                    ToolTip.Tip="Start or switch task">
+                <Button.Flyout>
+                    <Flyout Placement="BottomEdgeAlignedRight">
+                        <StackPanel Width="240" Spacing="4">
+                            <TextBlock Text="Switch to"
+                                       FontSize="11"
+                                       Opacity="0.6" />
+                            <ItemsControl x:Name="QuickSwitchList"
+                                          ItemsSource="{Binding QuickSwitchItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickSwitchItem">
+                                        <Button HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Background="Transparent"
+                                                Padding="8,5"
+                                                Command="{Binding $parent[ItemsControl].((vm:WidgetViewModel)DataContext).StartItemCommand}"
+                                                CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Name}" />
+                                                <TextBlock Text="{Binding JiraIssueKey}"
+                                                           Opacity="0.55"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+                                <TextBox x:Name="NewTaskTextBox"
+                                         Text="{Binding NewTaskName}"
+                                         PlaceholderText="New task…"
+                                         KeyDown="OnNewTaskKeyDown" />
+                                <Button Grid.Column="1"
+                                        Content="Start"
+                                        Command="{Binding StartNewTaskCommand}"
+                                        Margin="6,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+        </Grid>
+    </Border>
+</Window>

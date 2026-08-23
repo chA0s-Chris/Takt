@@ -34,6 +34,13 @@ public sealed class LiteDbTimeEntryRepository : ITimeEntryRepository
     public TimeEntry? GetById(Guid id) => _collection.FindById(id);
 
     /// <inheritdoc/>
+    public IReadOnlyList<TimeEntry> GetMostRecent(Int32 count) =>
+        _collection.Query()
+                   .OrderByDescending(x => x.StartedAt)
+                   .Limit(count)
+                   .ToList();
+
+    /// <inheritdoc/>
     public TimeEntry? GetOpenEntry() => _collection.FindOne(x => x.EndedAt == null);
 
     /// <inheritdoc/>
@@ -49,7 +56,7 @@ public sealed class LiteDbTimeEntryRepository : ITimeEntryRepository
         ArgumentNullException.ThrowIfNull(entry);
         if (entry.Id == Guid.Empty)
         {
-            entry.Id = Guid.NewGuid();
+            entry.Id = Guid.CreateVersion7();
         }
 
         _collection.Insert(entry);

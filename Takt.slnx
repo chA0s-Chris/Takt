@@ -21,6 +21,7 @@
   <Folder Name="/tests/">
     <File Path="tests\AGENTS.md" />
     <File Path="tests\Directory.Build.props" />
+    <Project Path="tests/Takt.App.Tests/Takt.App.Tests.csproj" />
     <Project Path="tests/Takt.Core.Tests/Takt.Core.Tests.csproj" />
   </Folder>
 </Solution>

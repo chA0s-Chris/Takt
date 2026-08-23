@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless.NUnit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Takt.App\Takt.App.csproj" />
+    <ProjectReference Include="..\Takt.Core.Tests\Takt.Core.Tests.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -156,11 +156,4 @@ public class TrackingServiceTests
     {
         _service.GetElapsed().Should().Be(TimeSpan.Zero);
     }
-
-    private sealed class TestTimeProvider : TimeProvider
-    {
-        public DateTimeOffset UtcNow { get; set; }
-
-        public override DateTimeOffset GetUtcNow() => UtcNow;
-    }
 }
