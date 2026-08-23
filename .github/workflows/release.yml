@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build, without the leading v (for example 0.1.0)'
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.rid }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            extension: '.exe'
+          - rid: linux-x64
+            extension: ''
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Determine the version
+        id: version
+        shell: bash
+        # A tag build takes the version from the tag, a manual run from its input.
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Building Takt ${version} for ${{ matrix.rid }}"
+
+      - name: Test
+        run: dotnet test Takt.slnx --configuration Release
+
+      - name: Publish
+        run: >
+          dotnet publish src/Takt.App/Takt.App.csproj
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          -p:Version=${{ steps.version.outputs.version }}
+          --output artifacts/publish
+
+      - name: Name the binary after its version and platform
+        shell: bash
+        run: |
+          mkdir -p artifacts/release
+          cp "artifacts/publish/Takt${{ matrix.extension }}" \
+             "artifacts/release/Takt-${{ steps.version.outputs.version }}-${{ matrix.rid }}${{ matrix.extension }}"
+          ls -lh artifacts/release
+
+      - name: Upload the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Takt-${{ matrix.rid }}
+          path: artifacts/release/*
+          if-no-files-found: error
+
+  attach:
+    name: Attach the binaries to the release
+    needs: publish
+    runs-on: ubuntu-latest
+    # Only a tag build has a release to attach to; a manual run just leaves the
+    # artifacts on the workflow run.
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download the build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        # The release usually exists already, drafted by Release Drafter and published
+        # under this tag; --clobber keeps a re-run from failing on existing assets.
+        run: |
+          if ! gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes
+          fi
+          gh release upload "${GITHUB_REF_NAME}" artifacts/* --clobber
