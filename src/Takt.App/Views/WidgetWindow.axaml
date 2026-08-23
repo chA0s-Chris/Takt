@@ -63,16 +63,30 @@
                                FontSize="11"
                                VerticalAlignment="Bottom"
                                Margin="0,0,0,3" />
+                    <TextBlock Text="Paused"
+                               Foreground="#FFE8A33D"
+                               FontSize="11"
+                               VerticalAlignment="Bottom"
+                               Margin="0,0,0,3"
+                               IsVisible="{Binding CanResume}" />
                 </StackPanel>
             </StackPanel>
 
-            <Button x:Name="StopButton"
+            <Button x:Name="PauseButton"
                     Grid.Column="1"
                     Classes="widget"
-                    Command="{Binding StopCommand}"
+                    Command="{Binding PauseCommand}"
                     IsVisible="{Binding IsTracking}"
-                    Content="⏹"
-                    ToolTip.Tip="Stop tracking" />
+                    Content="⏸"
+                    ToolTip.Tip="Pause tracking" />
+
+            <Button x:Name="ResumeButton"
+                    Grid.Column="1"
+                    Classes="widget"
+                    Command="{Binding ResumeCommand}"
+                    IsVisible="{Binding CanResume}"
+                    Content="▶"
+                    ToolTip.Tip="Resume last task" />
 
             <Button x:Name="SwitchButton"
                     Grid.Column="2"

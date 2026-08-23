@@ -78,9 +78,12 @@ public class WidgetWindowTests
         var elapsedText = window.FindControl<TextBlock>("ElapsedText");
         elapsedText.Should().NotBeNull();
         elapsedText.Text.Should().Be("00:05:00");
-        var stopButton = window.FindControl<Button>("StopButton");
-        stopButton.Should().NotBeNull();
-        stopButton.IsVisible.Should().BeTrue();
+        var pauseButton = window.FindControl<Button>("PauseButton");
+        pauseButton.Should().NotBeNull();
+        pauseButton.IsVisible.Should().BeTrue();
+        var resumeButton = window.FindControl<Button>("ResumeButton");
+        resumeButton.Should().NotBeNull();
+        resumeButton.IsVisible.Should().BeFalse();
 
         window.Hide();
     }

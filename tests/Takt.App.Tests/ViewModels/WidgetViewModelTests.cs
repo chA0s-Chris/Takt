@@ -48,6 +48,7 @@ public class WidgetViewModelTests
         _viewModel.IsTracking.Should().BeFalse();
         _viewModel.CurrentTaskName.Should().Be("Not tracking");
         _viewModel.ElapsedText.Should().Be("00:00:00");
+        _viewModel.CanResume.Should().BeFalse();
     }
 
     [Test]
@@ -91,14 +92,91 @@ public class WidgetViewModelTests
     }
 
     [Test]
-    public void StopCommand_StopsTracking()
+    public void PauseCommand_PausesAndKeepsTheTaskResumable()
     {
-        _trackingService.Start("Implement widget");
+        _trackingService.Start("Implement widget", "TEAM-1210");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(25);
 
-        _viewModel.StopCommand.Execute(null);
+        _viewModel.PauseCommand.Execute(null);
 
         _viewModel.IsTracking.Should().BeFalse();
-        _viewModel.CurrentTaskName.Should().Be("Not tracking");
+        _viewModel.CanResume.Should().BeTrue();
+        _viewModel.CurrentTaskName.Should().Be("Implement widget");
+        _viewModel.CurrentIssueKey.Should().Be("TEAM-1210");
+        _viewModel.ElapsedText.Should().Be("00:25:00");
+    }
+
+    [Test]
+    public void Tick_KeepsThePausedElapsedTimeFrozen()
+    {
+        _trackingService.Start("Implement widget");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(25);
+        _viewModel.PauseCommand.Execute(null);
+        _timeProvider.UtcNow = BaseTime.AddMinutes(55);
+
+        _viewModel.Tick();
+
+        _viewModel.ElapsedText.Should().Be("00:25:00");
+    }
+
+    [Test]
+    public void ResumeCommand_StartsANewEntryOnTheLastTask()
+    {
+        _trackingService.Start("Implement widget", "TEAM-1210", "Editor work");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(25);
+        _viewModel.PauseCommand.Execute(null);
+        _timeProvider.UtcNow = BaseTime.AddMinutes(40);
+
+        _viewModel.ResumeCommand.Execute(null);
+
+        _viewModel.IsTracking.Should().BeTrue();
+        var openEntry = _timeEntries.GetOpenEntry();
+        openEntry.Should().NotBeNull();
+        openEntry.TaskName.Should().Be("Implement widget");
+        openEntry.JiraIssueKey.Should().Be("TEAM-1210");
+        openEntry.Note.Should().Be("Editor work");
+        openEntry.StartedAt.Should().Be(BaseTime.AddMinutes(40));
+        _viewModel.ElapsedText.Should().Be("00:25:00");
+    }
+
+    [Test]
+    public void Tick_ContinuesAccumulatingAcrossStintsOfTheSameTask()
+    {
+        _trackingService.Start("Implement widget");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(25);
+        _viewModel.PauseCommand.Execute(null);
+        _timeProvider.UtcNow = BaseTime.AddMinutes(40);
+        _viewModel.ResumeCommand.Execute(null);
+        _timeProvider.UtcNow = BaseTime.AddMinutes(50);
+
+        _viewModel.Tick();
+
+        _viewModel.ElapsedText.Should().Be("00:35:00");
+    }
+
+    [Test]
+    public void Tick_CountsOnlyTheDisplayedTask()
+    {
+        _trackingService.Start("Implement widget");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(25);
+        _trackingService.SwitchTo("Code review");
+        _timeProvider.UtcNow = BaseTime.AddMinutes(35);
+
+        _viewModel.Tick();
+
+        _viewModel.ElapsedText.Should().Be("00:10:00");
+    }
+
+    [Test]
+    public void ResumeCommand_IsAvailableOnlyWhilePaused()
+    {
+        _viewModel.ResumeCommand.CanExecute(null).Should().BeFalse();
+
+        _trackingService.Start("Implement widget");
+        _viewModel.ResumeCommand.CanExecute(null).Should().BeFalse();
+
+        _viewModel.PauseCommand.Execute(null);
+        _viewModel.ResumeCommand.CanExecute(null).Should().BeTrue();
     }
 
     [Test]

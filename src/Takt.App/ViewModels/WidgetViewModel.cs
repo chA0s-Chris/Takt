@@ -10,8 +10,11 @@ using Takt.Core.Storage;
 using Takt.Core.Tracking;
 
 /// <summary>
-/// Drives the floating widget: the current task with its live elapsed time, and the
-/// quick-switch list built from templates and recent tasks.
+/// Drives the floating widget: the running or paused task with its elapsed time, and
+/// the quick-switch list built from templates and recent tasks. Pausing ends the
+/// current entry; resuming starts a new entry on the same task, so Jira later receives
+/// one worklog per work stint. The time readout shows the displayed task's accumulated
+/// time for today, so pausing freezes it and resuming continues from where it stood.
 /// </summary>
 public sealed partial class WidgetViewModel : ObservableObject
 {
@@ -23,6 +26,14 @@ public sealed partial class WidgetViewModel : ObservableObject
     private readonly ITimeEntryRepository _timeEntries;
     private readonly TimeProvider _timeProvider;
     private readonly TrackingService _trackingService;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResumeCommand))]
+    private Boolean _canResume;
+
+    private TimeSpan _completedToday;
+
+    private DateOnly _completedTodayDate;
 
     private TimeEntry? _currentEntry;
 
@@ -37,6 +48,8 @@ public sealed partial class WidgetViewModel : ObservableObject
 
     [ObservableProperty]
     private Boolean _isTracking;
+
+    private TimeEntry? _lastEntry;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(StartNewTaskCommand))]
@@ -74,25 +87,45 @@ public sealed partial class WidgetViewModel : ObservableObject
 
     /// <summary>
     /// Re-reads the tracking state and rebuilds the quick-switch list. Called on every
-    /// tracking change; safe to call at any time.
+    /// tracking change; safe to call at any time. Without a running timer, the most
+    /// recent entry is shown as the paused, resumable task.
     /// </summary>
     public void Refresh()
     {
         _currentEntry = _trackingService.CurrentEntry;
+        _lastEntry = _currentEntry is null ? _timeEntries.GetMostRecent(1).FirstOrDefault() : null;
         IsTracking = _currentEntry is not null;
-        CurrentTaskName = _currentEntry?.TaskName ?? NotTrackingText;
-        CurrentIssueKey = _currentEntry?.JiraIssueKey;
+        var displayEntry = _currentEntry ?? _lastEntry;
+        CurrentTaskName = displayEntry?.TaskName ?? NotTrackingText;
+        CurrentIssueKey = displayEntry?.JiraIssueKey;
+        CanResume = _lastEntry is not null;
+        RecomputeCompletedToday(displayEntry);
         Tick();
         LoadQuickSwitchItems();
     }
 
-    /// <summary>Updates the elapsed time display. Called once per second by the view.</summary>
+    /// <summary>
+    /// Updates the elapsed time display: the displayed task's completed stints of
+    /// today plus the running stint. Called once per second by the view. For a paused
+    /// task the value stays frozen; resuming continues from where it stood.
+    /// </summary>
     public void Tick()
     {
-        var entry = _currentEntry;
-        ElapsedText = entry is null
-            ? ZeroElapsedText
-            : FormatElapsed(entry.GetDuration(_timeProvider.GetUtcNow().UtcDateTime));
+        var displayEntry = _currentEntry ?? _lastEntry;
+        if (displayEntry is null)
+        {
+            ElapsedText = ZeroElapsedText;
+            return;
+        }
+
+        var now = _timeProvider.GetUtcNow();
+        if (DateOnly.FromDateTime(now.ToLocalTime().DateTime) != _completedTodayDate)
+        {
+            RecomputeCompletedToday(displayEntry);
+        }
+
+        var runningStint = _currentEntry?.GetDuration(now.UtcDateTime) ?? TimeSpan.Zero;
+        ElapsedText = FormatElapsed(_completedToday + runningStint);
     }
 
     private static String FormatElapsed(TimeSpan elapsed)
@@ -130,6 +163,40 @@ public sealed partial class WidgetViewModel : ObservableObject
     private void OnSwitchCompleted() => SwitchCompleted?.Invoke(this, EventArgs.Empty);
 
     [RelayCommand]
+    private void Pause() => _trackingService.Stop();
+
+    private void RecomputeCompletedToday(TimeEntry? displayEntry)
+    {
+        var localNow = _timeProvider.GetUtcNow().ToLocalTime();
+        _completedTodayDate = DateOnly.FromDateTime(localNow.DateTime);
+        if (displayEntry is null)
+        {
+            _completedToday = TimeSpan.Zero;
+            return;
+        }
+
+        var startOfDay = new DateTimeOffset(localNow.Date, localNow.Offset);
+        var nowUtc = localNow.UtcDateTime;
+        _completedToday = _timeEntries
+                          .GetBetween(startOfDay.UtcDateTime, startOfDay.AddDays(1).UtcDateTime)
+                          .Where(e => !e.IsRunning
+                                      && String.Equals(e.TaskName, displayEntry.TaskName, StringComparison.OrdinalIgnoreCase))
+                          .Aggregate(TimeSpan.Zero, (total, entry) => total + entry.GetDuration(nowUtc));
+    }
+
+    [RelayCommand(CanExecute = nameof(CanResume))]
+    private void Resume()
+    {
+        var lastEntry = _lastEntry;
+        if (lastEntry is null)
+        {
+            return;
+        }
+
+        _trackingService.SwitchTo(lastEntry.TaskName, lastEntry.JiraIssueKey, lastEntry.Note);
+    }
+
+    [RelayCommand]
     private void StartItem(QuickSwitchItem? item)
     {
         if (item is null)
@@ -154,7 +221,4 @@ public sealed partial class WidgetViewModel : ObservableObject
         NewTaskName = null;
         OnSwitchCompleted();
     }
-
-    [RelayCommand]
-    private void Stop() => _trackingService.Stop();
 }
