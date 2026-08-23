@@ -8,7 +8,7 @@ manual push of worklogs to Jira Cloud.
 | Area          | Decision                                                                 |
 |---------------|--------------------------------------------------------------------------|
 | Runtime       | .NET 10 (LTS)                                                            |
-| UI            | Avalonia 11.x, MVVM via CommunityToolkit.Mvvm                            |
+| UI            | Avalonia 12.x, MVVM via CommunityToolkit.Mvvm                            |
 | Storage       | LiteDB (single file, pure managed) behind thin repository interfaces     |
 | Distribution  | Single self-contained executable per RID (win-x64, linux-x64); no trimming, no AOT |
 | Jira          | Jira Cloud REST v3, email + API token, manual push-with-review           |
@@ -38,7 +38,7 @@ Two runtime projects only — the app is small; more granularity would be ceremo
 
 ```csharp
 class TimeEntry {
-    ObjectId Id;
+    Guid Id;                      // Guid, not ObjectId: LiteDB types stay inside Storage/
     string TaskName;
     string? JiraIssueKey;         // optional by design
     string? Note;
@@ -49,7 +49,7 @@ class TimeEntry {
 }
 
 class Template {
-    ObjectId Id;
+    Guid Id;
     string Name;                  // e.g. "Meetings (Q2)"
     string? DefaultJiraIssueKey;  // e.g. TEAM-1234
     string? DefaultNote;

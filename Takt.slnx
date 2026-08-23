@@ -15,9 +15,12 @@
   <Folder Name="/src/">
     <File Path="src\AGENTS.md" />
     <File Path="src\Directory.Build.props" />
+    <Project Path="src/Takt.App/Takt.App.csproj" />
+    <Project Path="src/Takt.Core/Takt.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <File Path="tests\AGENTS.md" />
     <File Path="tests\Directory.Build.props" />
+    <Project Path="tests/Takt.Core.Tests/Takt.Core.Tests.csproj" />
   </Folder>
 </Solution>
