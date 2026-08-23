@@ -109,19 +109,19 @@ land correctly in LiteDB, and killing/restarting the app recovers the open entry
 
 Deviations from the design canvas, deliberate:
 
-- The navigation rail carries Overview / Templates / Settings; *Sync* arrives with
+- The navigation rail carried Overview / Templates / Settings; *Sync* arrived with
   Milestone 4 rather than as a dead entry.
 - Icons are text glyphs instead of the drawn SVG set, and template ordering uses
   ↑/↓ buttons instead of drag handles.
 - The application pins the light theme; the widget stays hand-coloured dark.
 
-## Milestone 4 — Jira sync
+## Milestone 4 — Jira sync ✅
 
 - `JiraCloudClient` (REST v3, Basic auth email:token; issue-picker text search and
   the connection test already shipped):
   - `GET /rest/api/3/issue/{key}?fields=summary` — validate keys, cache summaries locally;
   - `POST /rest/api/3/issue/{key}/worklog` — push (`started`, `timeSpentSeconds`, comment from note);
-  - `PUT .../worklog/{id}` — re-push `LocallyModified` entries.
+  - `DELETE .../worklog/{id}` — remove the previous worklog of a re-pushed entry.
 - `SyncService`: push one entry / one day / all pending; per-entry results;
   state transitions only on confirmed success; friendly errors for 401/403/404
   (bad token, no permission, wrong issue key). Entries without an issue key are
@@ -130,9 +130,28 @@ Deviations from the design canvas, deliberate:
   per-entry status/error column.
 - Client tests against a stubbed `HttpMessageHandler` (no live Jira in tests).
 
+Deviations from the plan, deliberate:
+
+- Re-pushing an edited entry deletes the old worklog and creates a new one instead
+  of `PUT`ting it. A `PUT` would go to the wrong issue as soon as an edit moved the
+  entry, and delete-then-create needs no second code path. `TimeEntry` therefore
+  remembers `JiraWorklogIssueKey` — the issue the worklog actually lives on.
+- The note becomes the worklog comment as Atlassian Document Format (one paragraph
+  per line), which is what the v3 endpoints accept.
+- Summaries are cached in memory for the session (`JiraIssueCache`) rather than in
+  LiteDB; the cache is dropped when the Jira settings change.
+- Entries shorter than a minute are refused locally with a reason — Jira rejects
+  them — and entries without an issue key are summarized in one line instead of
+  being listed as unpushable rows.
+
+The push is deliberately one-way: deleting an entry locally leaves its Jira worklog
+alone. Takt is a helper for work that is otherwise logged by hand, not a mirror of
+Jira — and old entries are meant to be pruned locally at some point, which must not
+reach into Jira.
+
 **Done when:** a reviewed day can be pushed to real Jira Cloud issues; worklogs
-appear with correct start time and duration; a post-push edit re-syncs via PUT;
-failures surface per entry without corrupting local state.
+appear with correct start time and duration; a post-push edit re-syncs; failures
+surface per entry without corrupting local state.
 
 ## Milestone 5 — Packaging & polish
 

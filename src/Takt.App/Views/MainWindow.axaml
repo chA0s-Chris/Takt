@@ -33,6 +33,11 @@
                             Classes.selected="{Binding IsOverviewSelected}"
                             Command="{Binding ShowOverviewCommand}"
                             Content="Overview" />
+                    <Button x:Name="SyncNavButton"
+                            Classes="nav"
+                            Classes.selected="{Binding IsSyncSelected}"
+                            Command="{Binding ShowSyncCommand}"
+                            Content="Sync" />
                     <Button x:Name="TemplatesNavButton"
                             Classes="nav"
                             Classes.selected="{Binding IsTemplatesSelected}"
@@ -51,6 +56,9 @@
             <ContentControl.DataTemplates>
                 <DataTemplate DataType="vm:OverviewViewModel">
                     <views:OverviewView />
+                </DataTemplate>
+                <DataTemplate DataType="vm:SyncViewModel">
+                    <views:SyncView />
                 </DataTemplate>
                 <DataTemplate DataType="vm:TemplatesViewModel">
                     <views:TemplatesView />

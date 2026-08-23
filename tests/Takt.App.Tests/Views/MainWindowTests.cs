@@ -13,6 +13,7 @@ using FluentAssertions;
 using Takt.App.ViewModels;
 using Takt.App.Views;
 using Takt.Core.Domain;
+using Takt.Core.Jira;
 using Takt.Core.Storage;
 using Takt.Core.Tests.TestSupport;
 using Takt.Core.Tracking;
@@ -123,12 +124,56 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
+    public void MainWindow_ShowsThePendingEntriesOnTheSyncPage()
+    {
+        using var context = new TestContext();
+        context.JiraClient.IsConfigured = true;
+        context.TimeEntries.Insert(new()
+        {
+            TaskName = "Investigate gateway timeouts",
+            StartedAt = BaseTime,
+            EndedAt = BaseTime.AddHours(2),
+            JiraIssueKey = "TEAM-1187"
+        });
+        var window = context.CreateWindow();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        context.MainViewModel.ShowSyncCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
+        texts.Should().Contain("Investigate gateway timeouts");
+        texts.Should().Contain("TEAM-1187");
+        texts.Should().Contain("1 entry ready to push · 2 h 00 m");
+
+        // The row's push button reaches the page's command through the template; a broken
+        // binding would leave it without one.
+        var pushButton = window.GetVisualDescendants()
+                               .OfType<Button>()
+                               .Single(button => Equals(button.Content, "Push"));
+        pushButton.Command.Should().NotBeNull();
+        pushButton.Command.Execute(pushButton.CommandParameter);
+        Dispatcher.UIThread.RunJobs();
+
+        context.JiraClient.CreatedWorklogs.Should().ContainSingle().Which.IssueKey.Should().Be("TEAM-1187");
+
+        window.Hide();
+    }
+
+    [AvaloniaTest]
     public void MainWindow_SwitchesBetweenThePages()
     {
         using var context = new TestContext();
         var window = context.CreateWindow();
         window.Show();
         Dispatcher.UIThread.RunJobs();
+
+        context.MainViewModel.ShowSyncCommand.Execute(null);
+        Dispatcher.UIThread.RunJobs();
+
+        context.MainViewModel.IsSyncSelected.Should().BeTrue();
+        window.GetVisualDescendants().OfType<SyncView>().Should().ContainSingle();
 
         context.MainViewModel.ShowTemplatesCommand.Execute(null);
         Dispatcher.UIThread.RunJobs();
@@ -183,8 +228,10 @@ public class MainWindowTests
             };
             JiraClient = new();
             var trackingService = new TrackingService(TimeEntries, TimeProvider);
+            var syncService = new SyncService(TimeEntries, JiraClient);
             MainViewModel = new(
                 new(TimeEntries, trackingService, JiraClient, TimeProvider),
+                new(syncService, new(JiraClient), JiraClient, TimeProvider, new()),
                 new(Templates, JiraClient),
                 new(Settings, new InMemoryCredentialStore(), JiraClient, new()));
         }

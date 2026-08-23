@@ -22,21 +22,28 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private Boolean _isSettingsSelected;
 
     [ObservableProperty]
+    private Boolean _isSyncSelected;
+
+    [ObservableProperty]
     private Boolean _isTemplatesSelected;
 
     /// <summary>Creates the view model and selects the overview.</summary>
     /// <param name="overview">The overview page.</param>
+    /// <param name="sync">The sync page.</param>
     /// <param name="templates">The templates page.</param>
     /// <param name="settings">The settings page.</param>
     public MainWindowViewModel(
         OverviewViewModel overview,
+        SyncViewModel sync,
         TemplatesViewModel templates,
         SettingsViewModel settings)
     {
         ArgumentNullException.ThrowIfNull(overview);
+        ArgumentNullException.ThrowIfNull(sync);
         ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(settings);
         Overview = overview;
+        Sync = sync;
         Templates = templates;
         Settings = settings;
         _currentPage = overview;
@@ -54,6 +61,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>The settings page.</summary>
     public SettingsViewModel Settings { get; }
 
+    /// <summary>The sync page.</summary>
+    public SyncViewModel Sync { get; }
+
     /// <summary>The templates page.</summary>
     public TemplatesViewModel Templates { get; }
 
@@ -67,6 +77,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             case OverviewViewModel overview:
                 overview.Refresh();
+                break;
+            case SyncViewModel sync:
+                sync.Refresh();
                 break;
             case TemplatesViewModel templates:
                 templates.Refresh();
@@ -84,6 +97,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         CurrentPage = page;
         IsOverviewSelected = ReferenceEquals(page, Overview);
+        IsSyncSelected = ReferenceEquals(page, Sync);
         IsTemplatesSelected = ReferenceEquals(page, Templates);
         IsSettingsSelected = ReferenceEquals(page, Settings);
         Refresh();
@@ -94,6 +108,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [RelayCommand]
     private void ShowSettings() => Select(Settings);
+
+    [RelayCommand]
+    private void ShowSync() => Select(Sync);
 
     [RelayCommand]
     private void ShowTemplates() => Select(Templates);

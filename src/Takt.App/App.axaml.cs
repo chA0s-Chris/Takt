@@ -79,10 +79,13 @@ public sealed partial class App : Application
         services.AddSingleton<IJiraClient, JiraCloudClient>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<TrackingService>();
+        services.AddSingleton<JiraIssueCache>();
+        services.AddSingleton<SyncService>();
         services.AddSingleton<SettingsNotifier>();
         services.AddSingleton<WidgetViewModel>();
         services.AddSingleton<WidgetWindow>();
         services.AddSingleton<OverviewViewModel>();
+        services.AddSingleton<SyncViewModel>();
         services.AddSingleton<TemplatesViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<MainWindowViewModel>();
