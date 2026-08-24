@@ -21,7 +21,18 @@ public sealed class LiteDbTimeEntryRepository : ITimeEntryRepository
     }
 
     /// <inheritdoc/>
-    public void Delete(Guid id) => _collection.Delete(id);
+    public event EventHandler? Changed;
+
+    private void OnChanged() => Changed?.Invoke(this, EventArgs.Empty);
+
+    /// <inheritdoc/>
+    public void Delete(Guid id)
+    {
+        if (_collection.Delete(id))
+        {
+            OnChanged();
+        }
+    }
 
     /// <inheritdoc/>
     public IReadOnlyList<TimeEntry> GetBetween(DateTime fromUtc, DateTime toUtc) =>
@@ -60,6 +71,7 @@ public sealed class LiteDbTimeEntryRepository : ITimeEntryRepository
         }
 
         _collection.Insert(entry);
+        OnChanged();
     }
 
     /// <inheritdoc/>
@@ -70,5 +82,7 @@ public sealed class LiteDbTimeEntryRepository : ITimeEntryRepository
         {
             throw new InvalidOperationException($"Time entry {entry.Id} does not exist and cannot be updated.");
         }
+
+        OnChanged();
     }
 }

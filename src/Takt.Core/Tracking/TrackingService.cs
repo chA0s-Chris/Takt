@@ -8,7 +8,9 @@ using Takt.Core.Storage;
 /// <summary>
 /// The single entry point for starting, stopping, and switching the running timer.
 /// Enforces that at most one <see cref="TimeEntry"/> is open at any time. The open
-/// entry itself is the persisted tracking state, so a crash loses nothing.
+/// entry itself is the persisted tracking state, so a crash loses nothing. Starting,
+/// stopping, and switching announce themselves through
+/// <see cref="ITimeEntryRepository.Changed"/> like every other write.
 /// </summary>
 public sealed class TrackingService
 {
@@ -25,9 +27,6 @@ public sealed class TrackingService
         _timeEntries = timeEntries;
         _timeProvider = timeProvider;
     }
-
-    /// <summary>Raised after tracking started, stopped, or switched.</summary>
-    public event EventHandler? TrackingChanged;
 
     /// <summary>The currently running entry, or <c>null</c> when no timer is running.</summary>
     public TimeEntry? CurrentEntry => _timeEntries.GetOpenEntry();
@@ -73,7 +72,6 @@ public sealed class TrackingService
             SyncState = SyncState.Local
         };
         _timeEntries.Insert(entry);
-        OnTrackingChanged();
         return entry;
     }
 
@@ -90,7 +88,6 @@ public sealed class TrackingService
         }
 
         CloseEntry(entry);
-        OnTrackingChanged();
         return entry;
     }
 
@@ -121,7 +118,6 @@ public sealed class TrackingService
             SyncState = SyncState.Local
         };
         _timeEntries.Insert(entry);
-        OnTrackingChanged();
         return entry;
     }
 
@@ -138,8 +134,6 @@ public sealed class TrackingService
 
         _timeEntries.Update(entry);
     }
-
-    private void OnTrackingChanged() => TrackingChanged?.Invoke(this, EventArgs.Empty);
 
     private DateTime UtcNow() => _timeProvider.GetUtcNow().UtcDateTime;
 }

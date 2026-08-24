@@ -9,6 +9,13 @@ using Takt.Core.Domain;
 /// </summary>
 public interface ITimeEntryRepository
 {
+    /// <summary>
+    /// Raised after an entry was inserted, updated, or deleted. Every write goes through
+    /// the repository, so this is the one place that knows the stored entries changed —
+    /// no matter which window caused it. Handlers run on the thread that wrote.
+    /// </summary>
+    event EventHandler? Changed;
+
     /// <summary>Deletes the entry with the given identifier. Deleting a missing entry is a no-op.</summary>
     /// <param name="id">The identifier of the entry.</param>
     void Delete(Guid id);

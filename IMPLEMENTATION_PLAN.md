@@ -15,6 +15,7 @@ manual push of worklogs to Jira Cloud.
 | Credentials   | `ICredentialStore`: Windows Credential Manager (P/Invoke) on Windows, AES-encrypted file (per-user key, `0600`) on Linux |
 | Scope         | Purely per-user. Deferred: idle detection, worklog rounding, shared templates, reporting |
 | Interaction   | Widget-first: tracking, pause/resume, switching, and Jira issue assignment (text search over keys and titles) happen in the widget; the main window is for review, editing, templates, and pushing worklogs |
+| Change notice | Every write goes through a repository, so the repositories announce their changes (`Changed`); `DataChangeNotifier` moves that onto the UI thread and the open windows reload from it. Widget and main window therefore never show each other's stale data |
 
 ## Solution layout
 

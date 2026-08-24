@@ -17,12 +17,12 @@ using Takt.Core.Tracking;
 public class TrackingServiceTests
 {
     private static readonly DateTime BaseTime = new(2026, 8, 23, 9, 0, 0, DateTimeKind.Utc);
+    private Int32 _changedCount;
     private LiteDbTimeEntryRepository _repository;
     private TrackingService _service;
 
     private TempDatabase _tempDatabase;
     private TestTimeProvider _timeProvider;
-    private Int32 _trackingChangedCount;
 
     [SetUp]
     public void SetUp()
@@ -34,8 +34,8 @@ public class TrackingServiceTests
             UtcNow = BaseTime
         };
         _service = new(_repository, _timeProvider);
-        _trackingChangedCount = 0;
-        _service.TrackingChanged += (_, _) => _trackingChangedCount++;
+        _changedCount = 0;
+        _repository.Changed += (_, _) => _changedCount++;
     }
 
     [TearDown]
@@ -54,7 +54,7 @@ public class TrackingServiceTests
         stored.Should().NotBeNull();
         stored.Should().BeEquivalentTo(entry);
         _service.IsTracking.Should().BeTrue();
-        _trackingChangedCount.Should().Be(1);
+        _changedCount.Should().Be(1);
     }
 
     [Test]
@@ -99,7 +99,7 @@ public class TrackingServiceTests
         stopped.EndedAt.Should().Be(BaseTime.AddMinutes(25));
         _repository.GetOpenEntry().Should().BeNull();
         _service.IsTracking.Should().BeFalse();
-        _trackingChangedCount.Should().Be(2);
+        _changedCount.Should().Be(2);
     }
 
     [Test]
@@ -108,7 +108,7 @@ public class TrackingServiceTests
         var stopped = _service.Stop();
 
         stopped.Should().BeNull();
-        _trackingChangedCount.Should().Be(0);
+        _changedCount.Should().Be(0);
     }
 
     [Test]
@@ -129,7 +129,7 @@ public class TrackingServiceTests
         var openEntry = _repository.GetOpenEntry();
         openEntry.Should().NotBeNull();
         openEntry.Id.Should().Be(newEntry.Id);
-        _trackingChangedCount.Should().Be(2);
+        _changedCount.Should().Be(3);
     }
 
     [Test]
@@ -139,7 +139,7 @@ public class TrackingServiceTests
 
         entry.IsRunning.Should().BeTrue();
         _service.IsTracking.Should().BeTrue();
-        _trackingChangedCount.Should().Be(1);
+        _changedCount.Should().Be(1);
     }
 
     [Test]

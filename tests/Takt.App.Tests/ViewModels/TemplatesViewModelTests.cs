@@ -27,7 +27,8 @@ public class TemplatesViewModelTests
         _tempDatabase = new();
         _templates = new(_tempDatabase.Database);
         _jiraClient = new();
-        _viewModel = new(_templates, _jiraClient);
+        _viewModel = new(_templates, _jiraClient,
+                         new(new LiteDbTimeEntryRepository(_tempDatabase.Database), _templates));
     }
 
     [TearDown]

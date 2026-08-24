@@ -33,7 +33,8 @@ public class SyncViewModelTests
         {
             UtcNow = BaseTime
         };
-        _viewModel = new(new(_entries, _jira), new(_jira), _jira, _timeProvider, new());
+        _viewModel = new(new(_entries, _jira), new(_jira), _jira, _timeProvider, new(),
+                         new(_entries, new LiteDbTemplateRepository(_tempDatabase.Database)));
     }
 
     [TearDown]
@@ -147,9 +148,11 @@ public class SyncViewModelTests
     [Test]
     public async Task LoadIssueSummaries_ShowsTheSummaryAndFlagsAnUnknownKey()
     {
+        // Seeded before the entries: writing one refreshes the page, which looks the keys
+        // up right away and caches what Jira answered.
+        _jira.Issues["TEAM-1187"] = new("TEAM-1187", "Gateway returns 504 under load");
         Insert("Investigate gateway timeouts", "TEAM-1187", BaseTime);
         Insert("Typo", "TEAM-9999", BaseTime.AddHours(3));
-        _jira.Issues["TEAM-1187"] = new("TEAM-1187", "Gateway returns 504 under load");
         _viewModel.Refresh();
 
         await _viewModel.LoadIssueSummariesAsync();

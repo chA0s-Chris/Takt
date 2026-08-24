@@ -10,6 +10,7 @@ using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAssertions;
+using Takt.App.Services;
 using Takt.App.ViewModels;
 using Takt.App.Views;
 using Takt.Core.Domain;
@@ -229,10 +230,11 @@ public class MainWindowTests
             JiraClient = new();
             var trackingService = new TrackingService(TimeEntries, TimeProvider);
             var syncService = new SyncService(TimeEntries, JiraClient);
+            var dataChanges = new DataChangeNotifier(TimeEntries, Templates);
             MainViewModel = new(
-                new(TimeEntries, trackingService, JiraClient, TimeProvider),
-                new(syncService, new(JiraClient), JiraClient, TimeProvider, new()),
-                new(Templates, JiraClient),
+                new(TimeEntries, trackingService, JiraClient, TimeProvider, dataChanges),
+                new(syncService, new(JiraClient), JiraClient, TimeProvider, new(), dataChanges),
+                new(Templates, JiraClient, dataChanges),
                 new(Settings, new InMemoryCredentialStore(), JiraClient, new()));
         }
 

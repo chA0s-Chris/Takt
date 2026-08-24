@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Takt.App.Services;
 using Takt.Core.Jira;
 using Takt.Core.Storage;
 using Takt.Core.Tracking;
@@ -38,26 +39,29 @@ public sealed partial class OverviewViewModel : ObservableObject
 
     /// <summary>Creates the overview and loads the current day.</summary>
     /// <param name="timeEntries">The entry repository.</param>
-    /// <param name="trackingService">The tracking engine; changes trigger a reload.</param>
+    /// <param name="trackingService">The tracking engine, asked for the running entry.</param>
     /// <param name="jiraClient">The Jira client handed to the entry editor.</param>
     /// <param name="timeProvider">The clock and time zone used for the conversions.</param>
+    /// <param name="dataChanges">Announces entries written anywhere, the widget included.</param>
     public OverviewViewModel(
         ITimeEntryRepository timeEntries,
         TrackingService trackingService,
         IJiraClient jiraClient,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        DataChangeNotifier dataChanges)
     {
         ArgumentNullException.ThrowIfNull(timeEntries);
         ArgumentNullException.ThrowIfNull(trackingService);
         ArgumentNullException.ThrowIfNull(jiraClient);
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(dataChanges);
         _timeEntries = timeEntries;
         _trackingService = trackingService;
         _jiraClient = jiraClient;
         _timeProvider = timeProvider;
 
         _selectedDate = Today;
-        _trackingService.TrackingChanged += (_, _) => Refresh();
+        dataChanges.TimeEntriesChanged += (_, _) => Refresh();
         Refresh();
     }
 

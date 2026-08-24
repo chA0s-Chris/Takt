@@ -55,7 +55,7 @@ public sealed partial class TemplatesView : UserControl
         }
 
         var dialog = new TemplateEditorDialog(editor);
+        // No refresh here: saving writes through the repository, which announces it.
         await dialog.ShowDialog(owner);
-        _viewModel?.Refresh();
     }
 }

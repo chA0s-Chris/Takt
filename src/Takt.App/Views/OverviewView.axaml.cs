@@ -55,7 +55,7 @@ public sealed partial class OverviewView : UserControl
         }
 
         var dialog = new EntryEditorDialog(editor);
+        // No refresh here: saving writes through the repository, which announces it.
         await dialog.ShowDialog(owner);
-        _viewModel?.Refresh();
     }
 }

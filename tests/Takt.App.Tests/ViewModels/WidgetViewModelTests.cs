@@ -42,7 +42,8 @@ public class WidgetViewModelTests
         _trackingService = new(_timeEntries, _timeProvider);
         _jiraClient = new();
         _settings = new(_tempDatabase.Database);
-        _viewModel = new(_trackingService, _templates, _timeEntries, _settings, _timeProvider, _jiraClient);
+        _viewModel = new(_trackingService, _templates, _timeEntries, _settings, _timeProvider, _jiraClient,
+                         new(_timeEntries, _templates));
     }
 
     [TearDown]
@@ -70,6 +71,23 @@ public class WidgetViewModelTests
         _timeEntries.GetOpenEntry()!.Note.Should().Be("Checked the gateway logs");
         _viewModel.NoteButtonText.Should().Be("Checked the gateway logs");
         saved.Should().Be(1);
+    }
+
+    [Test]
+    public void NoteDraft_SurvivesARefreshCausedByAnotherWindow()
+    {
+        _trackingService.Start("Investigate gateway timeouts", "TEAM-1187");
+        _viewModel.NoteDraft = "Half-written note";
+
+        // Something else writes an entry — here a second task started elsewhere.
+        _timeEntries.Insert(new()
+        {
+            TaskName = "Code review",
+            StartedAt = BaseTime.AddHours(-2),
+            EndedAt = BaseTime.AddHours(-1)
+        });
+
+        _viewModel.NoteDraft.Should().Be("Half-written note");
     }
 
     [Test]
@@ -281,6 +299,21 @@ public class WidgetViewModelTests
 
         _viewModel.QuickSwitchItems.Select(i => i.Name).Should().Equal("Meetings (Q3)", "Bugfix");
         _viewModel.QuickSwitchItems[0].IsTemplate.Should().BeTrue();
+    }
+
+    [Test]
+    public void QuickSwitchItems_PickUpATemplateSavedInTheMainWindow()
+    {
+        _viewModel.QuickSwitchItems.Should().BeEmpty();
+
+        _templates.Insert(new()
+        {
+            Name = "Meetings (Q3)",
+            DefaultJiraIssueKey = "TEAM-1234",
+            SortOrder = 0
+        });
+
+        _viewModel.QuickSwitchItems.Select(i => i.Name).Should().Equal("Meetings (Q3)");
     }
 
     [Test]

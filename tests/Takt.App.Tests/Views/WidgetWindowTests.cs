@@ -37,13 +37,15 @@ public class WidgetWindowTests
         {
             UtcNow = BaseTime
         };
+        var templates = new LiteDbTemplateRepository(tempDatabase.Database);
         var viewModel = new WidgetViewModel(
             new(timeEntries, timeProvider),
-            new LiteDbTemplateRepository(tempDatabase.Database),
+            templates,
             timeEntries,
             settings,
             timeProvider,
-            new StubJiraClient());
+            new StubJiraClient(),
+            new(timeEntries, templates));
 
         var window = new WidgetWindow(viewModel, settings, new());
         window.Show();
@@ -64,13 +66,15 @@ public class WidgetWindowTests
             UtcNow = BaseTime
         };
         var trackingService = new TrackingService(timeEntries, timeProvider);
+        var templates = new LiteDbTemplateRepository(tempDatabase.Database);
         var viewModel = new WidgetViewModel(
             trackingService,
-            new LiteDbTemplateRepository(tempDatabase.Database),
+            templates,
             timeEntries,
             settings,
             timeProvider,
-            new StubJiraClient());
+            new StubJiraClient(),
+            new(timeEntries, templates));
         trackingService.Start("Implement widget", "TEAM-1234");
         timeProvider.UtcNow = BaseTime.AddMinutes(5);
 

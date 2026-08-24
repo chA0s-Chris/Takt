@@ -38,7 +38,8 @@ public class OverviewViewModelTests
         };
         _trackingService = new(_timeEntries, _timeProvider);
         _jiraClient = new();
-        _viewModel = new(_timeEntries, _trackingService, _jiraClient, _timeProvider);
+        _viewModel = new(_timeEntries, _trackingService, _jiraClient, _timeProvider,
+                         new(_timeEntries, new LiteDbTemplateRepository(_tempDatabase.Database)));
     }
 
     [TearDown]
@@ -186,6 +187,22 @@ public class OverviewViewModelTests
         _viewModel.IsEmpty.Should().BeTrue();
         _viewModel.TotalText.Should().Be("0 m");
         _viewModel.RunningStatusText.Should().BeNull();
+    }
+
+    [Test]
+    public void Overview_ShowsAnIssueKeyAssignedInTheWidget()
+    {
+        _trackingService.Start("Investigate gateway timeouts");
+        var row = _viewModel.Days.Single().Entries.Single();
+        row.IssueKey.Should().BeNull();
+
+        // What the widget does when an issue is picked: write it and let the repository
+        // announce it. The overview must not wait for the main window to be reopened.
+        var entry = _timeEntries.GetOpenEntry()!;
+        entry.JiraIssueKey = "TEAM-1187";
+        _timeEntries.Update(entry);
+
+        _viewModel.Days.Single().Entries.Single().IssueKey.Should().Be("TEAM-1187");
     }
 
     private void Insert(

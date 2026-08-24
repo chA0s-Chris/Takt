@@ -9,6 +9,12 @@ using Takt.Core.Domain;
 /// </summary>
 public interface ITemplateRepository
 {
+    /// <summary>
+    /// Raised after a template was inserted, updated, or deleted. Handlers run on the
+    /// thread that wrote.
+    /// </summary>
+    event EventHandler? Changed;
+
     /// <summary>Deletes the template with the given identifier. Deleting a missing template is a no-op.</summary>
     /// <param name="id">The identifier of the template.</param>
     void Delete(Guid id);

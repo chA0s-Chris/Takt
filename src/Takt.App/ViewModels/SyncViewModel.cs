@@ -41,18 +41,21 @@ public sealed partial class SyncViewModel : ObservableObject
     /// <param name="jira">The Jira client, asked whether it is configured at all.</param>
     /// <param name="timeProvider">Supplies the local time zone.</param>
     /// <param name="notifier">Announces changed settings.</param>
+    /// <param name="dataChanges">Announces entries written anywhere, the widget included.</param>
     public SyncViewModel(
         SyncService sync,
         JiraIssueCache issues,
         IJiraClient jira,
         TimeProvider timeProvider,
-        SettingsNotifier notifier)
+        SettingsNotifier notifier,
+        DataChangeNotifier dataChanges)
     {
         ArgumentNullException.ThrowIfNull(sync);
         ArgumentNullException.ThrowIfNull(issues);
         ArgumentNullException.ThrowIfNull(jira);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(notifier);
+        ArgumentNullException.ThrowIfNull(dataChanges);
         _sync = sync;
         _issues = issues;
         _jira = jira;
@@ -61,6 +64,16 @@ public sealed partial class SyncViewModel : ObservableObject
         // Another base URL or account means the looked-up summaries — and the keys that
         // came back unknown — say nothing about the instance now configured.
         notifier.Changed += (_, _) => _issues.Clear();
+
+        // A push writes to every entry it succeeds on; rebuilding the list underneath it
+        // would drop the rows the user is watching, results and all.
+        dataChanges.TimeEntriesChanged += (_, _) =>
+        {
+            if (!IsBusy)
+            {
+                Refresh();
+            }
+        };
     }
 
     /// <summary>The days holding the entries to push, oldest first.</summary>

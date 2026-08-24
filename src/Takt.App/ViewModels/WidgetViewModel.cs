@@ -5,6 +5,7 @@ namespace Takt.App.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using Takt.App.Services;
 using Takt.Core.Domain;
 using Takt.Core.Jira;
 using Takt.Core.Storage;
@@ -74,6 +75,10 @@ public sealed partial class WidgetViewModel : ObservableObject
     [ObservableProperty]
     private String? _noteDraft;
 
+    private Guid _noteDraftEntryId;
+
+    private String? _noteDraftSource;
+
     /// <summary>Creates the view model and loads the current tracking state.</summary>
     /// <param name="trackingService">The tracking engine.</param>
     /// <param name="templates">The template repository feeding the quick-switch list.</param>
@@ -81,13 +86,15 @@ public sealed partial class WidgetViewModel : ObservableObject
     /// <param name="settings">The settings repository holding the widget preferences.</param>
     /// <param name="timeProvider">The clock used to render the elapsed time.</param>
     /// <param name="jiraClient">The Jira client used for the issue search.</param>
+    /// <param name="dataChanges">Announces entries and templates written anywhere.</param>
     public WidgetViewModel(
         TrackingService trackingService,
         ITemplateRepository templates,
         ITimeEntryRepository timeEntries,
         ISettingsRepository settings,
         TimeProvider timeProvider,
-        IJiraClient jiraClient)
+        IJiraClient jiraClient,
+        DataChangeNotifier dataChanges)
     {
         ArgumentNullException.ThrowIfNull(trackingService);
         ArgumentNullException.ThrowIfNull(templates);
@@ -95,6 +102,7 @@ public sealed partial class WidgetViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(jiraClient);
+        ArgumentNullException.ThrowIfNull(dataChanges);
         _trackingService = trackingService;
         _templates = templates;
         _timeEntries = timeEntries;
@@ -102,7 +110,11 @@ public sealed partial class WidgetViewModel : ObservableObject
         _timeProvider = timeProvider;
         IssueSearch = new(jiraClient);
 
-        _trackingService.TrackingChanged += (_, _) => Refresh();
+        dataChanges.TimeEntriesChanged += (_, _) => Refresh();
+
+        // A template saved in the main window belongs in the quick-switch list right
+        // away — that list is the reason templates exist.
+        dataChanges.TemplatesChanged += (_, _) => LoadQuickSwitchItems();
         Refresh();
     }
 
@@ -122,8 +134,9 @@ public sealed partial class WidgetViewModel : ObservableObject
     public ObservableCollection<QuickSwitchItem> QuickSwitchItems { get; } = new();
 
     /// <summary>
-    /// Re-reads the tracking state and rebuilds the quick-switch list. Called on every
-    /// tracking change and whenever the settings change; safe to call at any time.
+    /// Re-reads the tracking state and rebuilds the quick-switch list. Called whenever a
+    /// time entry is written — here or in the main window — and whenever the settings
+    /// change; safe to call at any time.
     /// Without a running timer, the most recent entry is shown as the paused,
     /// resumable task.
     /// </summary>
@@ -140,7 +153,7 @@ public sealed partial class WidgetViewModel : ObservableObject
         IssueButtonText = displayEntry?.JiraIssueKey ?? SetIssueText;
         IsNoteButtonVisible = displayEntry is not null;
         var note = displayEntry?.Note;
-        NoteDraft = note;
+        SeedNoteDraft(displayEntry, note);
         NoteButtonText = String.IsNullOrWhiteSpace(note) ? SetNoteText : note;
         RecomputeCompletedToday(displayEntry);
         Tick();
@@ -193,7 +206,6 @@ public sealed partial class WidgetViewModel : ObservableObject
 
         _timeEntries.Update(entry);
         IssueSearch.Clear();
-        Refresh();
         IssueAssigned?.Invoke(this, EventArgs.Empty);
     }
 
@@ -276,9 +288,29 @@ public sealed partial class WidgetViewModel : ObservableObject
             entry.SyncState = SyncState.LocallyModified;
         }
 
+        // What was typed is now what is stored, so the draft counts as untouched again.
+        _noteDraftSource = entry.Note;
+        NoteDraft = entry.Note;
         _timeEntries.Update(entry);
-        Refresh();
         NoteSaved?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Takes the stored note into the draft, unless the user has typed something else
+    /// into it: a refresh caused by another window must not wipe a note being written.
+    /// Switching to a different entry always wins — that draft belongs to the old task.
+    /// </summary>
+    private void SeedNoteDraft(TimeEntry? displayEntry, String? note)
+    {
+        var entryId = displayEntry?.Id ?? Guid.Empty;
+        if (entryId == _noteDraftEntryId && !String.Equals(NoteDraft, _noteDraftSource, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _noteDraftEntryId = entryId;
+        _noteDraftSource = note;
+        NoteDraft = note;
     }
 
     [RelayCommand]

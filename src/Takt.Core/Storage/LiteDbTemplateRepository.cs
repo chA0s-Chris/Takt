@@ -20,14 +20,25 @@ public sealed class LiteDbTemplateRepository : ITemplateRepository
         _collection = database.Database.GetCollection<Template>(TaktDatabase.TemplateCollectionName);
     }
 
+    /// <inheritdoc/>
+    public event EventHandler? Changed;
+
     private static List<Template> Sort(IEnumerable<Template> templates) =>
         templates
             .OrderBy(x => x.SortOrder)
             .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+    private void OnChanged() => Changed?.Invoke(this, EventArgs.Empty);
+
     /// <inheritdoc/>
-    public void Delete(Guid id) => _collection.Delete(id);
+    public void Delete(Guid id)
+    {
+        if (_collection.Delete(id))
+        {
+            OnChanged();
+        }
+    }
 
     /// <inheritdoc/>
     public IReadOnlyList<Template> GetActive() => Sort(_collection.Find(x => !x.Archived));
@@ -48,6 +59,7 @@ public sealed class LiteDbTemplateRepository : ITemplateRepository
         }
 
         _collection.Insert(template);
+        OnChanged();
     }
 
     /// <inheritdoc/>
@@ -58,5 +70,7 @@ public sealed class LiteDbTemplateRepository : ITemplateRepository
         {
             throw new InvalidOperationException($"Template {template.Id} does not exist and cannot be updated.");
         }
+
+        OnChanged();
     }
 }

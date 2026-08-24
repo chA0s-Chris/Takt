@@ -27,6 +27,22 @@ public class LiteDbTimeEntryRepositoryTests
     public void TearDown() => _tempDatabase.Dispose();
 
     [Test]
+    public void Changed_IsRaisedForEveryWriteAndNotForADeleteThatHitsNothing()
+    {
+        var changes = 0;
+        _repository.Changed += (_, _) => changes++;
+        var entry = CreateClosedEntry(BaseTime);
+
+        _repository.Insert(entry);
+        entry.Note = "Edited";
+        _repository.Update(entry);
+        _repository.Delete(Guid.NewGuid());
+        _repository.Delete(entry.Id);
+
+        changes.Should().Be(3);
+    }
+
+    [Test]
     public void Insert_AssignsIdAndRoundTripsAllValues()
     {
         var entry = CreateClosedEntry(BaseTime);

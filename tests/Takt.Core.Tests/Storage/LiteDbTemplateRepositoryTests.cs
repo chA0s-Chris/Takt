@@ -25,6 +25,25 @@ public class LiteDbTemplateRepositoryTests
     public void TearDown() => _tempDatabase.Dispose();
 
     [Test]
+    public void Changed_IsRaisedForEveryWriteAndNotForADeleteThatHitsNothing()
+    {
+        var changes = 0;
+        _repository.Changed += (_, _) => changes++;
+        var template = new Template
+        {
+            Name = "Meetings (Q3)"
+        };
+
+        _repository.Insert(template);
+        template.Archived = true;
+        _repository.Update(template);
+        _repository.Delete(Guid.NewGuid());
+        _repository.Delete(template.Id);
+
+        changes.Should().Be(3);
+    }
+
+    [Test]
     public void Insert_AssignsIdAndRoundTripsAllValues()
     {
         var template = new Template

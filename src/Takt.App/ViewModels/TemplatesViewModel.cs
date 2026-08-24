@@ -5,6 +5,7 @@ namespace Takt.App.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using Takt.App.Services;
 using Takt.Core.Domain;
 using Takt.Core.Jira;
 using Takt.Core.Storage;
@@ -28,12 +29,15 @@ public sealed partial class TemplatesViewModel : ObservableObject
     /// <summary>Creates the view model and loads the templates.</summary>
     /// <param name="templates">The template repository.</param>
     /// <param name="jiraClient">The Jira client handed to the template editor.</param>
-    public TemplatesViewModel(ITemplateRepository templates, IJiraClient jiraClient)
+    /// <param name="dataChanges">Announces templates written anywhere, the editor included.</param>
+    public TemplatesViewModel(ITemplateRepository templates, IJiraClient jiraClient, DataChangeNotifier dataChanges)
     {
         ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(jiraClient);
+        ArgumentNullException.ThrowIfNull(dataChanges);
         _templates = templates;
         _jiraClient = jiraClient;
+        dataChanges.TemplatesChanged += (_, _) => Refresh();
         Refresh();
     }
 
@@ -55,7 +59,7 @@ public sealed partial class TemplatesViewModel : ObservableObject
     /// <summary>The active templates, in display order.</summary>
     public ObservableCollection<TemplateRowViewModel> Templates { get; } = new();
 
-    /// <summary>Reloads the templates from the database.</summary>
+    /// <summary>Reloads the templates from the database; called on every stored change.</summary>
     public void Refresh()
     {
         Templates.Clear();
@@ -88,7 +92,6 @@ public sealed partial class TemplatesViewModel : ObservableObject
         };
         _templates.Insert(copy);
         Resequence();
-        Refresh();
         EditRequested?.Invoke(this, new(copy, _templates, _jiraClient));
     }
 
@@ -120,7 +123,6 @@ public sealed partial class TemplatesViewModel : ObservableObject
         (moved.SortOrder, displaced.SortOrder) = (displaced.SortOrder, moved.SortOrder);
         _templates.Update(moved);
         _templates.Update(displaced);
-        Refresh();
     }
 
     [RelayCommand]
@@ -152,7 +154,6 @@ public sealed partial class TemplatesViewModel : ObservableObject
 
         row.Template.Archived = !row.Template.Archived;
         _templates.Update(row.Template);
-        Refresh();
     }
 
     [RelayCommand]

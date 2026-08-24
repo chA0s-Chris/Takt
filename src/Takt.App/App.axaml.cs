@@ -82,6 +82,7 @@ public sealed partial class App : Application
         services.AddSingleton<JiraIssueCache>();
         services.AddSingleton<SyncService>();
         services.AddSingleton<SettingsNotifier>();
+        services.AddSingleton<DataChangeNotifier>();
         services.AddSingleton<WidgetViewModel>();
         services.AddSingleton<WidgetWindow>();
         services.AddSingleton<OverviewViewModel>();
