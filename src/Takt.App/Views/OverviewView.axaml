@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:Takt.App.Views"
              xmlns:vm="using:Takt.App.ViewModels"
              x:Class="Takt.App.Views.OverviewView"
              x:DataType="vm:OverviewViewModel">
@@ -19,7 +20,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="20,14,20,16">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="20,14,20,16">
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                 <Button x:Name="PreviousButton"
@@ -67,7 +68,14 @@
             </StackPanel>
         </Grid>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+        <TextBlock x:Name="HintText"
+                   Grid.Row="1"
+                   Classes="subtle"
+                   TextWrapping="Wrap"
+                   Text="Double-click an entry or use its edit button to correct times, task name, issue key, and note."
+                   Margin="0,0,0,10" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
             <TextBlock Classes="subtle" VerticalAlignment="Center">
                 <Run Text="Tracked:" />
                 <Run Text="{Binding TotalText}" FontWeight="SemiBold" Foreground="{StaticResource TaktTextBrush}" />
@@ -85,7 +93,7 @@
             </Border>
         </StackPanel>
 
-        <Border Grid.Row="2" Classes="card" ClipToBounds="True">
+        <Border Grid.Row="3" Classes="card" ClipToBounds="True">
             <DockPanel>
                 <Border DockPanel.Dock="Bottom"
                         Background="#FAFBFC"
@@ -135,7 +143,15 @@
                                                         BorderThickness="0,1,0,0"
                                                         DoubleTapped="OnRowDoubleTapped"
                                                         Cursor="Hand">
-                                                    <Grid ColumnDefinitions="104,*,Auto,84,96"
+                                                    <!-- Right-clicking a row was the second thing people tried;
+                                                         the menu items carry the row as their data context. -->
+                                                    <Border.ContextFlyout>
+                                                        <MenuFlyout>
+                                                            <MenuItem Header="Edit…" Click="OnEditMenuItemClick" />
+                                                            <MenuItem Header="Delete…" Click="OnDeleteMenuItemClick" />
+                                                        </MenuFlyout>
+                                                    </Border.ContextFlyout>
+                                                    <Grid ColumnDefinitions="104,*,Auto,84,96,Auto"
                                                           Height="42"
                                                           Margin="14,0">
                                                         <TextBlock Grid.Column="0"
@@ -176,6 +192,18 @@
                                                                    Text="{Binding StatusText}"
                                                                    HorizontalAlignment="Right"
                                                                    VerticalAlignment="Center" />
+                                                        <!-- Always visible, not on hover: a button that appears
+                                                             under the pointer is no help to keyboard or touch. -->
+                                                        <Button Grid.Column="5"
+                                                                Classes="icon"
+                                                                Height="22"
+                                                                Width="22"
+                                                                Content="✎"
+                                                                ToolTip.Tip="Edit"
+                                                                VerticalAlignment="Center"
+                                                                Margin="10,0,0,0"
+                                                                Command="{Binding $parent[views:OverviewView].((vm:OverviewViewModel)DataContext).EditCommand}"
+                                                                CommandParameter="{Binding}" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

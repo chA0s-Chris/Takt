@@ -4,11 +4,13 @@ namespace Takt.App.Views;
 
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Takt.App.ViewModels;
 
 /// <summary>
-/// The entry overview page. Double-clicking a row opens the entry editor; the dialog
-/// is owned by the view, the view model only asks for it.
+/// The entry overview page. The edit button, the context menu, and a double-click all
+/// open the entry editor; the dialog is owned by the view, the view model only asks for
+/// it.
 /// </summary>
 public sealed partial class OverviewView : UserControl
 {
@@ -37,15 +39,29 @@ public sealed partial class OverviewView : UserControl
         base.OnDataContextChanged(e);
     }
 
-    private void OnEditRequested(Object? sender, EntryEditorViewModel editor) => _ = ShowEditorAsync(editor);
-
-    private void OnRowDoubleTapped(Object? sender, TappedEventArgs e)
+    /// <summary>
+    /// Runs an action for the row a control belongs to. The row buttons and the context
+    /// menu both inherit the row as their data context, so this is the one place that
+    /// has to know how a control maps back to an entry.
+    /// </summary>
+    private static void Invoke(Object? sender, Action<TimeEntryRowViewModel> action)
     {
         if (sender is Control { DataContext: TimeEntryRowViewModel row })
         {
-            _viewModel?.Edit(row);
+            action(row);
         }
     }
+
+    private void OnDeleteMenuItemClick(Object? sender, RoutedEventArgs e) =>
+        Invoke(sender, row => _viewModel?.DeleteCommand.Execute(row));
+
+    private void OnEditMenuItemClick(Object? sender, RoutedEventArgs e) =>
+        Invoke(sender, row => _viewModel?.EditCommand.Execute(row));
+
+    private void OnEditRequested(Object? sender, EntryEditorViewModel editor) => _ = ShowEditorAsync(editor);
+
+    private void OnRowDoubleTapped(Object? sender, TappedEventArgs e) =>
+        Invoke(sender, row => _viewModel?.EditCommand.Execute(row));
 
     private async Task ShowEditorAsync(EntryEditorViewModel editor)
     {

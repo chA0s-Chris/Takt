@@ -165,18 +165,37 @@ public class OverviewViewModelTests
     }
 
     [Test]
-    public void Edit_RequestsAnEditorForTheSelectedRow()
+    public void EditCommand_RequestsAnEditorForTheSelectedRow()
     {
         Insert("Code review", BaseTime, BaseTime.AddMinutes(30));
         _viewModel.Refresh();
         EntryEditorViewModel? requested = null;
         _viewModel.EditRequested += (_, editor) => requested = editor;
 
-        _viewModel.Edit(_viewModel.Days[0].Entries.Single());
+        _viewModel.EditCommand.Execute(_viewModel.Days[0].Entries.Single());
 
         requested.Should().NotBeNull();
         requested.Title.Should().Be("Edit entry");
         requested.TaskName.Should().Be("Code review");
+        requested.IsDeleteConfirmationVisible.Should().BeFalse();
+    }
+
+    [Test]
+    public void DeleteCommand_RequestsAnEditorThatAlreadyAsksForConfirmation()
+    {
+        Insert("Code review", BaseTime, BaseTime.AddMinutes(30));
+        _viewModel.Refresh();
+        EntryEditorViewModel? requested = null;
+        _viewModel.EditRequested += (_, editor) => requested = editor;
+
+        _viewModel.DeleteCommand.Execute(_viewModel.Days[0].Entries.Single());
+
+        requested.Should().NotBeNull();
+        requested.TaskName.Should().Be("Code review");
+        requested.IsDeleteConfirmationVisible.Should().BeTrue();
+
+        // Nothing is gone until the question is answered.
+        _timeEntries.GetBetween(BaseTime.AddDays(-1), BaseTime.AddDays(1)).Should().HaveCount(1);
     }
 
     [Test]

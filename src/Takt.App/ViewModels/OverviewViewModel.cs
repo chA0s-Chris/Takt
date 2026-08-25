@@ -81,16 +81,6 @@ public sealed partial class OverviewViewModel : ObservableObject
 
     private DateTime UtcNow => _timeProvider.GetUtcNow().UtcDateTime;
 
-    /// <summary>Opens the editor for the given row.</summary>
-    /// <param name="row">The row to edit.</param>
-    public void Edit(TimeEntryRowViewModel? row)
-    {
-        if (row is not null)
-        {
-            EditRequested?.Invoke(this, CreateEditor(row));
-        }
-    }
-
     /// <summary>Reloads the visible range from the database.</summary>
     public void Refresh()
     {
@@ -161,6 +151,34 @@ public sealed partial class OverviewViewModel : ObservableObject
 
     private EntryEditorViewModel CreateEditor(TimeEntryRowViewModel? row) =>
         new(row?.Entry, _timeEntries, _jiraClient, _timeProvider, _selectedDate);
+
+    /// <summary>
+    /// Opens the editor for the row with its delete confirmation already showing.
+    /// Deleting an entry cannot be undone, so it stays behind the same question the
+    /// editor asks instead of becoming one stray click in a dense list.
+    /// </summary>
+    [RelayCommand]
+    private void Delete(TimeEntryRowViewModel? row)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        var editor = CreateEditor(row);
+        editor.DeleteCommand.Execute(null);
+        EditRequested?.Invoke(this, editor);
+    }
+
+    /// <summary>Opens the editor for the given row.</summary>
+    [RelayCommand]
+    private void Edit(TimeEntryRowViewModel? row)
+    {
+        if (row is not null)
+        {
+            EditRequested?.Invoke(this, CreateEditor(row));
+        }
+    }
 
     [RelayCommand]
     private void GoToToday()

@@ -71,6 +71,52 @@ public class MainWindowTests
     }
 
     [AvaloniaTest]
+    public void MainWindow_OffersEditingAnEntryWithoutADoubleClick()
+    {
+        using var context = new TestContext();
+        context.TimeEntries.Insert(new()
+        {
+            TaskName = "Code review",
+            StartedAt = BaseTime,
+            EndedAt = BaseTime.AddMinutes(30)
+        });
+        var window = context.CreateWindow();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // The row's edit button reaches the page's command through the template; a broken
+        // binding would leave it without one. It is visible at all times, not on hover.
+        var editButton = window.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "✎"));
+        editButton.IsVisible.Should().BeTrue();
+        editButton.Command.Should().NotBeNull();
+        editButton.CommandParameter.Should()
+                  .BeOfType<TimeEntryRowViewModel>()
+                  .Which.TaskName.Should()
+                  .Be("Code review");
+
+        // Right-click offers the same, plus deleting.
+        var row = editButton.FindAncestorOfType<Border>()!;
+        while (row.ContextFlyout is null && row.FindAncestorOfType<Border>() is { } parent)
+        {
+            row = parent;
+        }
+
+        var flyout = row.ContextFlyout.Should().BeOfType<MenuFlyout>().Subject;
+        flyout.Items.OfType<MenuItem>().Select(item => item.Header).Should().Equal("Edit…", "Delete…");
+
+        flyout.ShowAt(row);
+        Dispatcher.UIThread.RunJobs();
+
+        // The menu items act on the row they were opened over; they inherit it.
+        flyout.Items.OfType<MenuItem>()
+              .Should()
+              .OnlyContain(item => item.DataContext is TimeEntryRowViewModel);
+
+        flyout.Hide();
+        window.Hide();
+    }
+
+    [AvaloniaTest]
     public void MainWindow_OpensCentredAndKeepsAMovedPosition()
     {
         using var context = new TestContext();
