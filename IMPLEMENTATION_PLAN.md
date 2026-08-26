@@ -10,7 +10,7 @@ manual push of worklogs to Jira Cloud.
 | Runtime       | .NET 10 (LTS)                                                            |
 | UI            | Avalonia 12.x, MVVM via CommunityToolkit.Mvvm                            |
 | Storage       | LiteDB (single file, pure managed) behind thin repository interfaces     |
-| Distribution  | Single self-contained executable per RID (win-x64, linux-x64); no trimming, no AOT |
+| Distribution  | Single self-contained executable per RID (win-x64, linux-x64); no trimming, no AOT. The team runs Windows with WSL2, so those two RIDs cover it. macOS and arm64 stay deferred: a Mac build is not a RID but a bundle, an icon source, and a Gatekeeper story, and nobody who would run either platform has asked yet |
 | Jira          | Jira Cloud REST v3, email + API token, manual push-with-review           |
 | Credentials   | `ICredentialStore`: Windows Credential Manager (P/Invoke) on Windows, AES-encrypted file (per-user key, `0600`) on Linux |
 | Scope         | Purely per-user. Deferred: idle detection, worklog rounding, shared templates, reporting |
