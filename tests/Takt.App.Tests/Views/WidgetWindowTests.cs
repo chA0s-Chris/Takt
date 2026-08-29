@@ -6,6 +6,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Headless.NUnit;
+using Avalonia.Media;
+using Avalonia.Styling;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAssertions;
 using Takt.App.ViewModels;
@@ -21,6 +24,77 @@ using Takt.Core.Tracking;
 public class WidgetWindowTests
 {
     private static readonly DateTime BaseTime = new(2026, 8, 23, 9, 0, 0, DateTimeKind.Utc);
+
+    [AvaloniaTest]
+    public void Widget_KeepsThePillDarkWhileItsFlyoutFollowsTheAppearance()
+    {
+        using var tempDatabase = new TempDatabase();
+        var timeEntries = new LiteDbTimeEntryRepository(tempDatabase.Database);
+        var settings = new LiteDbSettingsRepository(tempDatabase.Database);
+        var timeProvider = new TestTimeProvider
+        {
+            UtcNow = BaseTime
+        };
+        var templates = new LiteDbTemplateRepository(tempDatabase.Database);
+        var viewModel = new WidgetViewModel(
+            new(timeEntries, timeProvider),
+            templates,
+            timeEntries,
+            settings,
+            timeProvider,
+            new StubJiraClient(),
+            new(timeEntries, templates));
+
+        var window = new WidgetWindow(viewModel, settings, new());
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var rootBorder = window.FindControl<Border>("RootBorder");
+        rootBorder.Should().NotBeNull();
+        var pillColour = rootBorder.Background.Should().BeAssignableTo<ISolidColorBrush>().Subject.Color;
+
+        try
+        {
+            Application.Current.Should().NotBeNull();
+            Application.Current.RequestedThemeVariant = ThemeVariant.Dark;
+            Dispatcher.UIThread.RunJobs();
+
+            // The pill is hand-coloured, so the selected appearance must not reach it.
+            rootBorder.Background.Should().BeAssignableTo<ISolidColorBrush>()
+                      .Which.Color.Should().Be(pillColour);
+
+            // What the widget opens is an ordinary surface and follows the appearance.
+            var switchButton = window.FindControl<Button>("SwitchButton");
+            switchButton.Should().NotBeNull();
+            var flyout = switchButton.Flyout.Should().BeOfType<Flyout>().Subject;
+            flyout.ShowAt(switchButton);
+            Dispatcher.UIThread.RunJobs();
+
+            var flyoutContent = flyout.Content.Should().BeAssignableTo<Control>().Subject;
+            flyoutContent.ActualThemeVariant.Should().Be(ThemeVariant.Dark);
+
+            // The light direction is the one that matters: pinning the widget window to
+            // the dark variant would keep the flyout dark here and break issue search
+            // and note editing for anyone using the light appearance.
+            Application.Current.RequestedThemeVariant = ThemeVariant.Light;
+            Dispatcher.UIThread.RunJobs();
+            flyoutContent.ActualThemeVariant.Should().Be(ThemeVariant.Light);
+
+            rootBorder.Background.Should().BeAssignableTo<ISolidColorBrush>()
+                      .Which.Color.Should().Be(pillColour);
+
+            flyout.Hide();
+        }
+        finally
+        {
+            if (Application.Current is { } application)
+            {
+                application.RequestedThemeVariant = ThemeVariant.Light;
+            }
+        }
+
+        window.Hide();
+    }
 
     [AvaloniaTest]
     public void Widget_RestoresTheSavedPositionOnOpen()

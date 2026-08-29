@@ -5,6 +5,7 @@ namespace Takt.App.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Reflection;
+using Takt.App.Services;
 
 /// <summary>
 /// The main window: the navigation rail and the page currently shown next to it.
@@ -12,8 +13,15 @@ using System.Reflection;
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
+    private readonly ThemeService _theme;
+
     [ObservableProperty]
     private ObservableObject _currentPage;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ThemeGlyph))]
+    [NotifyPropertyChangedFor(nameof(ThemeToolTip))]
+    private Boolean _isDarkTheme;
 
     [ObservableProperty]
     private Boolean _isOverviewSelected;
@@ -32,16 +40,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="sync">The sync page.</param>
     /// <param name="templates">The templates page.</param>
     /// <param name="settings">The settings page.</param>
+    /// <param name="theme">The service owning the selected appearance.</param>
     public MainWindowViewModel(
         OverviewViewModel overview,
         SyncViewModel sync,
         TemplatesViewModel templates,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        ThemeService theme)
     {
         ArgumentNullException.ThrowIfNull(overview);
         ArgumentNullException.ThrowIfNull(sync);
         ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(theme);
+        _theme = theme;
+        _isDarkTheme = theme.IsDark;
         Overview = overview;
         Sync = sync;
         Templates = templates;
@@ -66,6 +79,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     /// <summary>The templates page.</summary>
     public TemplatesViewModel Templates { get; }
+
+    /// <summary>The glyph on the appearance toggle: it shows the appearance the button switches to.</summary>
+    public String ThemeGlyph => IsDarkTheme ? "☀" : "☾";
+
+    /// <summary>The tooltip on the appearance toggle.</summary>
+    public String ThemeToolTip => IsDarkTheme ? "Switch to the light appearance" : "Switch to the dark appearance";
 
     /// <summary>The application version, shown at the bottom of the navigation rail.</summary>
     public String VersionText { get; }
@@ -114,4 +133,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [RelayCommand]
     private void ShowTemplates() => Select(Templates);
+
+    [RelayCommand]
+    private void ToggleTheme()
+    {
+        _theme.Toggle();
+        IsDarkTheme = _theme.IsDark;
+    }
 }

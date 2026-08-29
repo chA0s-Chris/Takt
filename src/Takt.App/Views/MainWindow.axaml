@@ -11,12 +11,12 @@
         MinWidth="720"
         MinHeight="440"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource TaktPageBrush}">
+        Background="{DynamicResource TaktPageBrush}">
 
     <Grid ColumnDefinitions="152,*">
         <Border Grid.Column="0"
-                Background="{StaticResource TaktRailBrush}"
-                BorderBrush="#E3E6EC"
+                Background="{DynamicResource TaktRailBrush}"
+                BorderBrush="{DynamicResource TaktCardBorderBrush}"
                 BorderThickness="0,0,1,0">
             <DockPanel Margin="8,12">
                 <TextBlock DockPanel.Dock="Top"
@@ -24,10 +24,20 @@
                            FontSize="14"
                            FontWeight="SemiBold"
                            Margin="10,4,0,14" />
-                <TextBlock DockPanel.Dock="Bottom"
-                           Classes="muted"
-                           Text="{Binding VersionText}"
-                           Margin="10,8" />
+                <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" Margin="10,4,4,4">
+                    <TextBlock Grid.Column="0"
+                               Classes="muted"
+                               Text="{Binding VersionText}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            x:Name="ThemeToggleButton"
+                            Classes="icon"
+                            Height="24"
+                            Width="24"
+                            Content="{Binding ThemeGlyph}"
+                            ToolTip.Tip="{Binding ThemeToolTip}"
+                            Command="{Binding ToggleThemeCommand}" />
+                </Grid>
                 <StackPanel Spacing="2" VerticalAlignment="Top">
                     <Button x:Name="OverviewNavButton"
                             Classes="nav"
