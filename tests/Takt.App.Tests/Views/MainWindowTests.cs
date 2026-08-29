@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.NUnit;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -284,6 +285,33 @@ public class MainWindowTests
         finally
         {
             Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        }
+    }
+
+    [AvaloniaTest]
+    public void ThemeSwitch_ReResolvesTheWindowBrushes()
+    {
+        using var context = new TestContext();
+        var window = context.CreateWindow();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        try
+        {
+            // Guards the DynamicResource conversion: a StaticResource reference resolves
+            // once and would keep its light colour while the variant says otherwise.
+            var light = window.Background.Should().BeAssignableTo<ISolidColorBrush>().Subject.Color;
+
+            context.MainViewModel.ToggleThemeCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+
+            window.Background.Should().BeAssignableTo<ISolidColorBrush>()
+                  .Which.Color.Should().NotBe(light);
+        }
+        finally
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            window.Close();
         }
     }
 

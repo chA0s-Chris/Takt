@@ -67,7 +67,7 @@
                     <SolidColorBrush x:Key="TaktRunningBadgeBrush" Color="#23332A" />
                     <SolidColorBrush x:Key="TaktRunningBrush" Color="#63C489" />
                     <SolidColorBrush x:Key="TaktRunningHoverBrush" Color="#1F2C24" />
-                    <SolidColorBrush x:Key="TaktRunningSoftBrush" Color="#1A241E" />
+                    <SolidColorBrush x:Key="TaktRunningSoftBrush" Color="#1E2B22" />
                     <SolidColorBrush x:Key="TaktSecondaryBrush" Color="#A4ADBA" />
                     <SolidColorBrush x:Key="TaktSegmentTrackBrush" Color="#262C35" />
                     <SolidColorBrush x:Key="TaktSubtleSurfaceBrush" Color="#1A1E25" />
