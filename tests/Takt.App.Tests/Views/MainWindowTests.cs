@@ -284,7 +284,10 @@ public class MainWindowTests
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            if (Application.Current is { } application)
+            {
+                application.RequestedThemeVariant = ThemeVariant.Light;
+            }
         }
     }
 
@@ -310,7 +313,11 @@ public class MainWindowTests
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            if (Application.Current is { } application)
+            {
+                application.RequestedThemeVariant = ThemeVariant.Light;
+            }
+
             window.Close();
         }
     }
@@ -340,7 +347,11 @@ public class MainWindowTests
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            if (Application.Current is { } application)
+            {
+                application.RequestedThemeVariant = ThemeVariant.Light;
+            }
+
             window.Close();
         }
     }
@@ -369,7 +380,10 @@ public class MainWindowTests
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            if (Application.Current is { } application)
+            {
+                application.RequestedThemeVariant = ThemeVariant.Light;
+            }
         }
     }
 

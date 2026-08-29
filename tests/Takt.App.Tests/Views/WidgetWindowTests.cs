@@ -87,7 +87,10 @@ public class WidgetWindowTests
         }
         finally
         {
-            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            if (Application.Current is { } application)
+            {
+                application.RequestedThemeVariant = ThemeVariant.Light;
+            }
         }
 
         window.Hide();
