@@ -49,6 +49,10 @@ public sealed partial class App : Application
             _serviceProvider = BuildServices();
             desktop.Exit += (_, _) => _serviceProvider.Dispose();
 
+            // Before any window is shown, so no frame is drawn in the wrong appearance.
+            _serviceProvider.GetRequiredService<ThemeService>()
+                            .ApplyStoredTheme();
+
             _widgetWindow = _serviceProvider.GetRequiredService<WidgetWindow>();
             _widgetWindow.Show();
 
@@ -82,6 +86,7 @@ public sealed partial class App : Application
         services.AddSingleton<JiraIssueCache>();
         services.AddSingleton<SyncService>();
         services.AddSingleton<SettingsNotifier>();
+        services.AddSingleton<ThemeService>();
         services.AddSingleton<DataChangeNotifier>();
         services.AddSingleton<WidgetViewModel>();
         services.AddSingleton<WidgetWindow>();
@@ -145,10 +150,9 @@ public sealed partial class App : Application
             Menu = menu
         };
         _trayIcon.Clicked += (_, _) => ShowWidget();
-        TrayIcon.SetIcons(this, new()
-        {
+        TrayIcon.SetIcons(this, [
             _trayIcon
-        });
+        ]);
     }
 
     private void ShowJiraSettings()

@@ -10,12 +10,12 @@ Users should be able to switch the main window between a light and a dark appear
 
 ## Acceptance Criteria
 
-- [ ] Outside the theme dictionaries that define the tokens, no colour literal appears in `App.axaml` or in any view except `WidgetWindow.axaml`; every colour used by the main window and its dialogs resolves through a named `Takt*` resource.
-- [ ] The application resources define both a light and a dark value for every `Takt*` colour token.
-- [ ] A sun/moon button at the bottom of the navigation rail switches the main window and every open dialog between the light and the dark appearance immediately, without restarting the application.
-- [ ] The selected appearance is persisted and restored on the next start.
-- [ ] The widget pill renders identically regardless of the selected appearance, while the flyouts it opens — issue search, note editor and quick-switch — follow the selected appearance.
-- [ ] Automated tests cover the toggle changing the application theme variant, the persisted appearance being restored, and a widget flyout resolving against the selected appearance.
+- [x] Outside the theme dictionaries that define the tokens, no colour literal appears in `App.axaml` or in any view except `WidgetWindow.axaml`; every colour used by the main window and its dialogs resolves through a named `Takt*` resource.
+- [x] The application resources define both a light and a dark value for every `Takt*` colour token.
+- [x] A sun/moon button at the bottom of the navigation rail switches the main window and every open dialog between the light and the dark appearance immediately, without restarting the application.
+- [x] The selected appearance is persisted and restored on the next start.
+- [x] The widget pill renders identically regardless of the selected appearance, while the flyouts it opens — issue search, note editor and quick-switch — follow the selected appearance.
+- [x] Automated tests cover the toggle changing the application theme variant, the persisted appearance being restored, and a widget flyout resolving against the selected appearance.
 
 ## Technical Details
 
@@ -27,7 +27,9 @@ Two values only. "Follow the operating system" is deliberately out of scope: a t
 
 ### Applying the variant
 
-A new `ThemeService` in `Takt.App/Services/`, registered as a singleton in `App.BuildServices`. It reads the stored `TaktTheme`, applies it by assigning `Application.Current.RequestedThemeVariant`, persists changes through `ISettingsRepository`, and raises `SettingsNotifier.NotifyChanged()` — the Get/Save/notify pattern `SettingsViewModel` already uses for the widget preferences.
+A new `ThemeService` in `Takt.App/Services/`, registered as a singleton in `App.BuildServices`. It reads the stored `TaktTheme`, applies it by assigning `Application.Current.RequestedThemeVariant`, and persists changes through `ISettingsRepository`.
+
+It deliberately does not raise `SettingsNotifier.NotifyChanged()`, unlike the widget preferences in `SettingsViewModel`. That notifier's subscribers react to a changed Jira connection and widget preferences: announcing a cosmetic change through it makes `SyncViewModel` discard the `JiraIssueCache` and re-fetch summaries from Jira, and makes the widget re-apply its settings.
 
 `App.OnFrameworkInitializationCompleted` must apply the stored appearance after `BuildServices()` and before `_widgetWindow.Show()`; otherwise the first frame appears in the wrong one. That body runs only under `IClassicDesktopStyleApplicationLifetime`, which the headless harness does not provide, so the ordering is verified by observation on a real desktop session rather than by an automated test.
 

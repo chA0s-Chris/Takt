@@ -17,6 +17,9 @@ public sealed class AppSettings
     /// <summary>The e-mail address used for Jira Basic authentication.</summary>
     public String? JiraEmail { get; set; }
 
+    /// <summary>The appearance the main window is rendered in.</summary>
+    public TaktTheme Theme { get; set; } = TaktTheme.Light;
+
     /// <summary>Indicates whether the floating widget stays above other windows.</summary>
     public Boolean WidgetAlwaysOnTop { get; set; } = true;
 

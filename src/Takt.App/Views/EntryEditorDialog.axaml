@@ -10,7 +10,7 @@
         SizeToContent="Height"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource TaktCardBrush}">
+        Background="{DynamicResource TaktCardBrush}">
 
     <StackPanel Margin="20,16" Spacing="12">
         <TextBlock Classes="title" Text="{Binding Title}" />
@@ -104,7 +104,7 @@
                        VerticalAlignment="Center"
                        IsVisible="{Binding DurationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                 <Run Text="=" />
-                <Run Text="{Binding DurationText}" FontWeight="SemiBold" Foreground="{StaticResource TaktTextBrush}" />
+                <Run Text="{Binding DurationText}" FontWeight="SemiBold" Foreground="{DynamicResource TaktTextBrush}" />
             </TextBlock>
             <TextBlock Classes="subtle ok"
                        Text="This entry is still running; its end is set when you pause."
@@ -112,22 +112,22 @@
                        IsVisible="{Binding IsRunning}" />
         </StackPanel>
 
-        <Border Background="{StaticResource TaktWarningBrush}"
-                BorderBrush="{StaticResource TaktWarningBorderBrush}"
+        <Border Background="{DynamicResource TaktWarningBrush}"
+                BorderBrush="{DynamicResource TaktWarningBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="10,7"
                 IsVisible="{Binding OverlapWarning, Converter={x:Static ObjectConverters.IsNotNull}}">
             <TextBlock x:Name="OverlapWarningText"
                        FontSize="12"
-                       Foreground="{StaticResource TaktWarningTextBrush}"
+                       Foreground="{DynamicResource TaktWarningTextBrush}"
                        Text="{Binding OverlapWarning}"
                        TextWrapping="Wrap" />
         </Border>
 
         <TextBlock x:Name="ValidationErrorText"
                    FontSize="12"
-                   Foreground="{StaticResource TaktDangerBrush}"
+                   Foreground="{DynamicResource TaktDangerBrush}"
                    Text="{Binding ValidationError}"
                    TextWrapping="Wrap"
                    IsVisible="{Binding ValidationError, Converter={x:Static ObjectConverters.IsNotNull}}" />

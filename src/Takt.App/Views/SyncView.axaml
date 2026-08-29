@@ -10,13 +10,13 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Border.row:pointerover">
-            <Setter Property="Background" Value="#F4F6FA" />
+            <Setter Property="Background" Value="{DynamicResource TaktRowHoverBrush}" />
         </Style>
         <Style Selector="Border.row.pushed">
-            <Setter Property="Background" Value="{StaticResource TaktRunningSoftBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TaktRunningSoftBrush}" />
         </Style>
         <Style Selector="Border.row.failed">
-            <Setter Property="Background" Value="{StaticResource TaktWarningBrush}" />
+            <Setter Property="Background" Value="{DynamicResource TaktWarningBrush}" />
         </Style>
     </UserControl.Styles>
 
@@ -38,8 +38,8 @@
         </Grid>
 
         <Border Grid.Row="1"
-                Background="{StaticResource TaktWarningBrush}"
-                BorderBrush="{StaticResource TaktWarningBorderBrush}"
+                Background="{DynamicResource TaktWarningBrush}"
+                BorderBrush="{DynamicResource TaktWarningBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="12,9"
@@ -47,7 +47,7 @@
                 IsVisible="{Binding IsNotConfigured}">
             <TextBlock x:Name="NotConfiguredText"
                        Classes="subtle"
-                       Foreground="{StaticResource TaktWarningTextBrush}"
+                       Foreground="{DynamicResource TaktWarningTextBrush}"
                        TextWrapping="Wrap"
                        Text="Jira is not configured yet — add the base URL, e-mail, and API token under Settings." />
         </Border>
@@ -77,7 +77,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:SyncDayGroupViewModel">
                                 <StackPanel>
-                                    <Grid ColumnDefinitions="*,Auto,Auto" Background="#F7F8FA">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" Background="{DynamicResource TaktPageBrush}">
                                         <TextBlock Grid.Column="0"
                                                    Classes="subtle"
                                                    FontWeight="SemiBold"
@@ -104,7 +104,7 @@
                                                 <Border Classes="row"
                                                         Classes.pushed="{Binding IsPushed}"
                                                         Classes.failed="{Binding HasFailed}"
-                                                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                                                        BorderBrush="{DynamicResource TaktRowSeparatorBrush}"
                                                         BorderThickness="0,1,0,0">
                                                     <Grid ColumnDefinitions="104,*,Auto,72,Auto"
                                                           MinHeight="46"

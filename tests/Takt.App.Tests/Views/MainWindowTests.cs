@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.NUnit;
 using Avalonia.Layout;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAssertions;
@@ -259,6 +260,91 @@ public class MainWindowTests
         dialog.Close();
     }
 
+    [AvaloniaTest]
+    public void ThemeService_RestoresTheStoredAppearanceOnStartup()
+    {
+        using var tempDatabase = new TempDatabase();
+        var settings = new LiteDbSettingsRepository(tempDatabase.Database);
+        settings.Save(new()
+        {
+            Theme = TaktTheme.Dark
+        });
+
+        try
+        {
+            // A fresh service stands in for the next application start.
+            var theme = new ThemeService(settings);
+            theme.IsDark.Should().BeTrue();
+
+            theme.ApplyStoredTheme();
+
+            Application.Current.Should().NotBeNull();
+            Application.Current.RequestedThemeVariant.Should().Be(ThemeVariant.Dark);
+        }
+        finally
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        }
+    }
+
+    [AvaloniaTest]
+    public void ThemeToggleButton_IsWiredIntoTheNavigationRail()
+    {
+        using var context = new TestContext();
+        var window = context.CreateWindow();
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        try
+        {
+            var toggle = window.FindControl<Button>("ThemeToggleButton");
+            toggle.Should().NotBeNull();
+            toggle.IsVisible.Should().BeTrue();
+            toggle.Content.Should().Be("\u263e");
+
+            toggle.Command.Should().NotBeNull();
+            toggle.Command.Execute(toggle.CommandParameter);
+            Dispatcher.UIThread.RunJobs();
+
+            Application.Current.Should().NotBeNull();
+            Application.Current.RequestedThemeVariant.Should().Be(ThemeVariant.Dark);
+            toggle.Content.Should().Be("\u2600");
+        }
+        finally
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+            window.Close();
+        }
+    }
+
+    [AvaloniaTest]
+    public void ThemeToggle_SwitchesTheApplicationVariantAndTheGlyph()
+    {
+        using var context = new TestContext();
+        try
+        {
+            context.MainViewModel.IsDarkTheme.Should().BeFalse();
+            context.MainViewModel.ThemeGlyph.Should().Be("\u263e");
+
+            context.MainViewModel.ToggleThemeCommand.Execute(null);
+
+            Application.Current.Should().NotBeNull();
+            Application.Current.RequestedThemeVariant.Should().Be(ThemeVariant.Dark);
+            context.MainViewModel.IsDarkTheme.Should().BeTrue();
+            context.MainViewModel.ThemeGlyph.Should().Be("\u2600");
+            context.Settings.Get().Theme.Should().Be(TaktTheme.Dark);
+
+            context.MainViewModel.ToggleThemeCommand.Execute(null);
+
+            Application.Current.RequestedThemeVariant.Should().Be(ThemeVariant.Light);
+            context.Settings.Get().Theme.Should().Be(TaktTheme.Light);
+        }
+        finally
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        }
+    }
+
     private sealed class TestContext : IDisposable
     {
         private readonly TempDatabase _tempDatabase;
@@ -277,11 +363,13 @@ public class MainWindowTests
             var trackingService = new TrackingService(TimeEntries, TimeProvider);
             var syncService = new SyncService(TimeEntries, JiraClient);
             var dataChanges = new DataChangeNotifier(TimeEntries, Templates);
+            Theme = new(Settings);
             MainViewModel = new(
                 new(TimeEntries, trackingService, JiraClient, TimeProvider, dataChanges),
                 new(syncService, new(JiraClient), JiraClient, TimeProvider, new(), dataChanges),
                 new(Templates, JiraClient, dataChanges),
-                new(Settings, new InMemoryCredentialStore(), JiraClient, new()));
+                new(Settings, new InMemoryCredentialStore(), JiraClient, new()),
+                Theme);
         }
 
         public StubJiraClient JiraClient { get; }
@@ -291,6 +379,8 @@ public class MainWindowTests
         public LiteDbSettingsRepository Settings { get; }
 
         public LiteDbTemplateRepository Templates { get; }
+
+        public ThemeService Theme { get; }
 
         public LiteDbTimeEntryRepository TimeEntries { get; }
 

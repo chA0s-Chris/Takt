@@ -10,7 +10,7 @@
         SizeToContent="Height"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource TaktCardBrush}">
+        Background="{DynamicResource TaktCardBrush}">
 
     <StackPanel Margin="20,16" Spacing="12">
         <TextBlock Classes="title" Text="{Binding Title}" />

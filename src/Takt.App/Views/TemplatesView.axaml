@@ -9,7 +9,7 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Border.row:pointerover">
-            <Setter Property="Background" Value="#F4F6FA" />
+            <Setter Property="Background" Value="{DynamicResource TaktRowHoverBrush}" />
         </Style>
     </UserControl.Styles>
 
@@ -29,14 +29,14 @@
         </Grid>
 
         <Border Grid.Row="1"
-                Background="#EDF0FA"
-                BorderBrush="#D8DEF3"
+                Background="{DynamicResource TaktInfoBrush}"
+                BorderBrush="{DynamicResource TaktInfoBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="12,9"
                 Margin="0,0,0,10">
             <TextBlock Classes="subtle"
-                       Foreground="#3D4A85"
+                       Foreground="{DynamicResource TaktInfoTextBrush}"
                        TextWrapping="Wrap"
                        Text="Quarter rollover: duplicate a template and change its issue key — for example Meetings (Q2) → Meetings (Q3)." />
         </Border>
@@ -44,8 +44,8 @@
         <Border Grid.Row="2" Classes="card" ClipToBounds="True">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Bottom" IsVisible="{Binding HasArchived}">
-                    <Border Background="#FAFBFC"
-                            BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                    <Border Background="{DynamicResource TaktSubtleSurfaceBrush}"
+                            BorderBrush="{DynamicResource TaktRowSeparatorBrush}"
                             BorderThickness="0,1,0,0"
                             Padding="8,4">
                         <Button x:Name="ArchivedToggleButton"
@@ -60,7 +60,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:TemplateRowViewModel">
                                 <Border Classes="row"
-                                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                                        BorderBrush="{DynamicResource TaktRowSeparatorBrush}"
                                         BorderThickness="0,1,0,0">
                                     <Grid ColumnDefinitions="*,Auto,Auto" Height="40" Margin="14,0">
                                         <TextBlock Grid.Column="0"
@@ -100,7 +100,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:TemplateRowViewModel">
                                 <Border Classes="row"
-                                        BorderBrush="{StaticResource TaktRowSeparatorBrush}"
+                                        BorderBrush="{DynamicResource TaktRowSeparatorBrush}"
                                         BorderThickness="0,1,0,0"
                                         DoubleTapped="OnRowDoubleTapped"
                                         Cursor="Hand">
