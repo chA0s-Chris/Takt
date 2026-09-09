@@ -106,7 +106,7 @@
                                                         Classes.failed="{Binding HasFailed}"
                                                         BorderBrush="{DynamicResource TaktRowSeparatorBrush}"
                                                         BorderThickness="0,1,0,0">
-                                                    <Grid ColumnDefinitions="104,*,Auto,72,Auto"
+                                                    <Grid ColumnDefinitions="104,*,Auto,72,Auto,Auto,Auto"
                                                           MinHeight="46"
                                                           Margin="14,6">
                                                         <TextBlock Grid.Column="0"
@@ -170,6 +170,20 @@
                                                                    VerticalAlignment="Center"
                                                                    HorizontalAlignment="Center"
                                                                    IsVisible="{Binding IsPushed}" />
+                                                        <Button Grid.Column="5"
+                                                                Classes="toolbar"
+                                                                Content="Edit"
+                                                                VerticalAlignment="Center"
+                                                                Command="{Binding $parent[views:SyncView].((vm:SyncViewModel)DataContext).EditCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                IsEnabled="{Binding $parent[views:SyncView].((vm:SyncViewModel)DataContext).IsBusy, Converter={x:Static BoolConverters.Not}}" />
+                                                        <Button Grid.Column="6"
+                                                                Classes="toolbar"
+                                                                Content="Delete"
+                                                                VerticalAlignment="Center"
+                                                                Command="{Binding $parent[views:SyncView].((vm:SyncViewModel)DataContext).DeleteCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                IsEnabled="{Binding $parent[views:SyncView].((vm:SyncViewModel)DataContext).IsBusy, Converter={x:Static BoolConverters.Not}}" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

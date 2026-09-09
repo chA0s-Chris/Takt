@@ -33,7 +33,7 @@ public class SyncViewModelTests
         {
             UtcNow = BaseTime
         };
-        _viewModel = new(new(_entries, _jira), new(_jira), _jira, _timeProvider, new(),
+        _viewModel = new(new(_entries, _jira), new(_jira), _jira, _entries, _timeProvider, new(),
                          new(_entries, new LiteDbTemplateRepository(_tempDatabase.Database)));
     }
 
@@ -93,6 +93,27 @@ public class SyncViewModelTests
         _viewModel.Refresh();
 
         _viewModel.IsNotConfigured.Should().BeTrue();
+    }
+
+    [Test]
+    public void ZeroDurationEntry_CanBeEditedAndDeletedFromTheSyncPage()
+    {
+        var entry = Insert("Empty stint", "TEAM-1187", BaseTime, TimeSpan.Zero);
+        _viewModel.Refresh();
+        var row = _viewModel.Days.Single().Rows.Single();
+        var editors = new List<EntryEditorViewModel>();
+        _viewModel.EditRequested += (_, editor) => editors.Add(editor);
+
+        _viewModel.EditCommand.Execute(row);
+
+        editors.Should().ContainSingle().Which.Entry.Id.Should().Be(entry.Id);
+        _viewModel.DeleteCommand.Execute(row);
+
+        editors.Should().HaveCount(2);
+        var deleteEditor = editors[1];
+        deleteEditor.IsDeleteConfirmationVisible.Should().BeTrue();
+        deleteEditor.ConfirmDeleteCommand.Execute(null);
+        _entries.GetById(entry.Id).Should().BeNull();
     }
 
     [Test]
@@ -164,14 +185,14 @@ public class SyncViewModelTests
         rows[1].HasUnknownIssue.Should().BeTrue();
     }
 
-    private TimeEntry Insert(String taskName, String? issueKey, DateTime startedAt)
+    private TimeEntry Insert(String taskName, String? issueKey, DateTime startedAt, TimeSpan? duration = null)
     {
         var entry = new TimeEntry
         {
             TaskName = taskName,
             JiraIssueKey = issueKey,
             StartedAt = startedAt,
-            EndedAt = startedAt.AddHours(2)
+            EndedAt = startedAt + (duration ?? TimeSpan.FromHours(2))
         };
         _entries.Insert(entry);
         return entry;
