@@ -40,11 +40,25 @@ public sealed class SyncService
                 .Where(entry => String.IsNullOrWhiteSpace(entry.JiraIssueKey))
                 .ToList();
 
-    /// <summary>Returns the completed entries that carry an issue key and are not in sync.</summary>
+    /// <summary>
+    /// Returns the completed entries that carry an issue key, are not in sync, and are
+    /// long enough for Jira to accept them.
+    /// </summary>
     /// <returns>The entries awaiting a push, in chronological order.</returns>
     public IReadOnlyList<TimeEntry> GetPending() =>
         _entries.GetUnsynced()
-                .Where(entry => !String.IsNullOrWhiteSpace(entry.JiraIssueKey))
+                .Where(entry => !String.IsNullOrWhiteSpace(entry.JiraIssueKey) && !IsTooShort(entry))
+                .ToList();
+
+    /// <summary>
+    /// Returns the completed entries that carry an issue key and are not in sync, but are
+    /// shorter than <see cref="MinimumDuration"/>. Jira rejects them, so they stay local
+    /// until they are edited to last longer.
+    /// </summary>
+    /// <returns>The entries too short to push, in chronological order.</returns>
+    public IReadOnlyList<TimeEntry> GetTooShort() =>
+        _entries.GetUnsynced()
+                .Where(entry => !String.IsNullOrWhiteSpace(entry.JiraIssueKey) && IsTooShort(entry))
                 .ToList();
 
     /// <summary>
@@ -104,6 +118,9 @@ public sealed class SyncService
 
     private static SyncResult Failure(TimeEntry entry, String message) =>
         new(entry.Id, entry.TaskName, false, message);
+
+    private static Boolean IsTooShort(TimeEntry entry) =>
+        entry.EndedAt is { } endedAt && endedAt - entry.StartedAt < MinimumDuration;
 
     private static SyncResult Success(TimeEntry entry, String message) =>
         new(entry.Id, entry.TaskName, true, message);

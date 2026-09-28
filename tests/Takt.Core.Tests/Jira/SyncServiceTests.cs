@@ -55,6 +55,28 @@ public class SyncServiceTests
     }
 
     [Test]
+    public void GetPending_LeavesOutEntriesShorterThanAMinute()
+    {
+        var oneMinute = Insert("Quick check", "TEAM-1", duration: SyncService.MinimumDuration);
+        Insert("Accidental start", "TEAM-2", duration: TimeSpan.FromSeconds(59));
+        Insert("Shortened after push", "TEAM-3", SyncState.LocallyModified, duration: TimeSpan.FromSeconds(30));
+
+        _service.GetPending().Should().ContainSingle().Which.Id.Should().Be(oneMinute.Id);
+    }
+
+    [Test]
+    public void GetTooShort_ReturnsUnsyncedEntriesWithAnIssueKeyShorterThanAMinute()
+    {
+        Insert("Quick check", "TEAM-1", duration: SyncService.MinimumDuration);
+        var accidental = Insert("Accidental start", "TEAM-2", duration: TimeSpan.FromSeconds(59));
+        var shortened = Insert("Shortened after push", "TEAM-3", SyncState.LocallyModified, duration: TimeSpan.FromSeconds(30));
+        Insert("Short and without a key", null, duration: TimeSpan.FromSeconds(20));
+        Insert("Short but pushed", "TEAM-4", SyncState.Synced, duration: TimeSpan.FromSeconds(20));
+
+        _service.GetTooShort().Select(entry => entry.Id).Should().BeEquivalentTo([accidental.Id, shortened.Id]);
+    }
+
+    [Test]
     public async Task Push_CreatesAWorklogAndMarksTheEntrySynced()
     {
         var entry = Insert("Investigate gateway timeouts", "TEAM-1187", note: "Checked the gateway logs");

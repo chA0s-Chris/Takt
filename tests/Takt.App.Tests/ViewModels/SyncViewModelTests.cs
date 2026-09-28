@@ -68,8 +68,9 @@ public class SyncViewModelTests
 
         _viewModel.Days.Should().BeEmpty();
         _viewModel.IsEmpty.Should().BeTrue();
-        _viewModel.StatusText.Should().Contain("Nothing to push");
+        _viewModel.StatusText.Should().Be("Nothing to push — every closed entry is in Jira.");
         _viewModel.LocalOnlyText.Should().BeNull();
+        _viewModel.TooShortText.Should().BeNull();
     }
 
     [Test]
@@ -83,6 +84,54 @@ public class SyncViewModelTests
 
         _viewModel.Days.Should().ContainSingle().Which.Rows.Should().ContainSingle();
         _viewModel.LocalOnlyText.Should().Be("2 entries have no issue key and stay local.");
+    }
+
+    [Test]
+    public void Refresh_LeavesOutAndMentionsTheEntriesShorterThanAMinute()
+    {
+        Insert("Investigate gateway timeouts", "TEAM-1187", BaseTime);
+        Insert("Accidental start", "TEAM-2", BaseTime.AddHours(3), TimeSpan.FromSeconds(40));
+        Insert("Meetings", null, BaseTime.AddHours(5), TimeSpan.FromSeconds(40));
+
+        _viewModel.Refresh();
+
+        _viewModel.Days.Should().ContainSingle().Which.Rows.Should().ContainSingle()
+                  .Which.TaskName.Should().Be("Investigate gateway timeouts");
+        _viewModel.TooShortText.Should().Be("1 entry is shorter than a minute and stays local.");
+        _viewModel.LocalOnlyText.Should().Be("1 entry has no issue key and stays local.");
+    }
+
+    [Test]
+    public void Refresh_CountsSeveralEntriesShorterThanAMinute()
+    {
+        Insert("Accidental start", "TEAM-2", BaseTime, TimeSpan.FromSeconds(40));
+        Insert("Another accidental start", "TEAM-3", BaseTime.AddHours(1), TimeSpan.FromSeconds(10));
+
+        _viewModel.Refresh();
+
+        _viewModel.TooShortText.Should().Be("2 entries are shorter than a minute and stay local.");
+    }
+
+    [Test]
+    public void Refresh_DoesNotClaimEverythingIsInJiraWhileShortEntriesRemain()
+    {
+        Insert("Accidental start", "TEAM-2", BaseTime, TimeSpan.FromSeconds(40));
+
+        _viewModel.Refresh();
+
+        _viewModel.IsEmpty.Should().BeTrue();
+        _viewModel.StatusText.Should().Be("Nothing to push.");
+    }
+
+    [Test]
+    public void Refresh_DoesNotClaimEverythingIsInJiraWhileEntriesWithoutAnIssueKeyRemain()
+    {
+        Insert("Meetings", null, BaseTime);
+
+        _viewModel.Refresh();
+
+        _viewModel.IsEmpty.Should().BeTrue();
+        _viewModel.StatusText.Should().Be("Nothing to push.");
     }
 
     [Test]
@@ -164,14 +213,14 @@ public class SyncViewModelTests
         rows[1].HasUnknownIssue.Should().BeTrue();
     }
 
-    private TimeEntry Insert(String taskName, String? issueKey, DateTime startedAt)
+    private TimeEntry Insert(String taskName, String? issueKey, DateTime startedAt, TimeSpan? duration = null)
     {
         var entry = new TimeEntry
         {
             TaskName = taskName,
             JiraIssueKey = issueKey,
             StartedAt = startedAt,
-            EndedAt = startedAt.AddHours(2)
+            EndedAt = startedAt + (duration ?? TimeSpan.FromHours(2))
         };
         _entries.Insert(entry);
         return entry;

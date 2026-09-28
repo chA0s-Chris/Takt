@@ -10,12 +10,12 @@ The sync view should only offer entries Jira will accept. Short entries should s
 
 ## Acceptance Criteria
 
-- [ ] Closed, unsynced entries with an issue key and a duration under one minute no longer appear as rows in the sync view. This applies to entries that were never pushed and to entries edited after a push.
-- [ ] Entries of exactly one minute or longer still appear and can be pushed.
-- [ ] When short entries exist, the sync view shows a separate muted hint with their count (for example "1 entry is shorter than a minute and stays local." / "2 entries are shorter than a minute and stay local."). No hint is shown when there are none.
-- [ ] The existing "no issue key" hint is unchanged, and entries without an issue key are not counted in the short-entry hint.
-- [ ] When the sync view has no rows but short entries or entries without an issue key remain, neither the empty-state text nor the status text claims that every closed entry is in Jira.
-- [ ] Automated tests cover the pending and short-entry filtering in `SyncService`, including the one-minute boundary and an edited-after-push entry, and the hint text and the empty-list status text in `SyncViewModel`.
+- [x] Closed, unsynced entries with an issue key and a duration under one minute no longer appear as rows in the sync view. This applies to entries that were never pushed and to entries edited after a push.
+- [x] Entries of exactly one minute or longer still appear and can be pushed.
+- [x] When short entries exist, the sync view shows a separate muted hint with their count (for example "1 entry is shorter than a minute and stays local." / "2 entries are shorter than a minute and stay local."). No hint is shown when there are none.
+- [x] The existing "no issue key" hint is unchanged, and entries without an issue key are not counted in the short-entry hint.
+- [x] When the sync view has no rows but short entries or entries without an issue key remain, neither the empty-state text nor the status text claims that every closed entry is in Jira.
+- [x] Automated tests cover the pending and short-entry filtering in `SyncService`, including the one-minute boundary and an edited-after-push entry, and the hint text and the empty-list status text in `SyncViewModel`.
 
 ## Technical Details
 
