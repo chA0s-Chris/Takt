@@ -41,8 +41,8 @@ public class MainWindowTests
             EndedAt = BaseTime.AddHours(2)
         };
         context.TimeEntries.Insert(entry);
-        var editor = new EntryEditorViewModel(entry, context.TimeEntries, context.JiraClient, context.TimeProvider,
-                                              new(2026, 8, 21));
+        var editor = new EntryEditorViewModel(entry, context.TimeEntries, context.Templates, context.JiraClient,
+                                              context.TimeProvider, new(2026, 8, 21));
 
         var dialog = new EntryEditorDialog(editor);
         dialog.Show();
@@ -51,6 +51,28 @@ public class MainWindowTests
         dialog.FindControl<TextBox>("TaskNameTextBox")!.Text.Should().Be("Meetings (Q3)");
         dialog.FindControl<TextBox>("StartTimeTextBox")!.Text.Should().Be("09:00");
         dialog.FindControl<Button>("SaveButton")!.IsEnabled.Should().BeTrue();
+        dialog.FindControl<Button>("StartFromButton")!.IsVisible.Should().BeFalse();
+
+        dialog.Close();
+    }
+
+    [AvaloniaTest]
+    public void EntryEditorDialog_OffersTheStartingPointsForANewEntry()
+    {
+        using var context = new TestContext();
+        context.Templates.Insert(new()
+        {
+            Name = "Meetings (Q3)",
+            DefaultJiraIssueKey = "TEAM-1234"
+        });
+        var editor = new EntryEditorViewModel(null, context.TimeEntries, context.Templates, context.JiraClient,
+                                              context.TimeProvider, new(2026, 8, 21));
+
+        var dialog = new EntryEditorDialog(editor);
+        dialog.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        dialog.FindControl<Button>("StartFromButton")!.IsVisible.Should().BeTrue();
 
         dialog.Close();
     }
@@ -414,7 +436,7 @@ public class MainWindowTests
             var dataChanges = new DataChangeNotifier(TimeEntries, Templates);
             Theme = new(Settings);
             MainViewModel = new(
-                new(TimeEntries, trackingService, JiraClient, TimeProvider, dataChanges),
+                new(TimeEntries, Templates, trackingService, JiraClient, TimeProvider, dataChanges),
                 new(syncService, new(JiraClient), JiraClient, TimeProvider, new(), dataChanges),
                 new(Templates, JiraClient, dataChanges),
                 new(Settings, new InMemoryCredentialStore(), JiraClient, new()),

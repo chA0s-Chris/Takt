@@ -43,6 +43,7 @@ public sealed partial class EntryEditorDialog : Window
         };
 
         _viewModel.IssueAssigned += (_, _) => IssueSearchButton.Flyout?.Hide();
+        _viewModel.StartItemApplied += (_, _) => StartFromButton.Flyout?.Hide();
         _viewModel.CloseRequested += (_, saved) => Close(saved);
     }
 }

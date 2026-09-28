@@ -38,7 +38,8 @@ public class OverviewViewModelTests
         };
         _trackingService = new(_timeEntries, _timeProvider);
         _jiraClient = new();
-        _viewModel = new(_timeEntries, _trackingService, _jiraClient, _timeProvider,
+        _viewModel = new(_timeEntries, new LiteDbTemplateRepository(_tempDatabase.Database), _trackingService,
+                         _jiraClient, _timeProvider,
                          new(_timeEntries, new LiteDbTemplateRepository(_tempDatabase.Database)));
     }
 

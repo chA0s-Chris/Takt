@@ -19,6 +19,7 @@ using Takt.Core.Tracking;
 public sealed partial class OverviewViewModel : ObservableObject
 {
     private readonly IJiraClient _jiraClient;
+    private readonly ITemplateRepository _templates;
     private readonly ITimeEntryRepository _timeEntries;
     private readonly TimeProvider _timeProvider;
     private readonly TrackingService _trackingService;
@@ -39,23 +40,27 @@ public sealed partial class OverviewViewModel : ObservableObject
 
     /// <summary>Creates the overview and loads the current day.</summary>
     /// <param name="timeEntries">The entry repository.</param>
+    /// <param name="templates">The template repository handed to the entry editor.</param>
     /// <param name="trackingService">The tracking engine, asked for the running entry.</param>
     /// <param name="jiraClient">The Jira client handed to the entry editor.</param>
     /// <param name="timeProvider">The clock and time zone used for the conversions.</param>
     /// <param name="dataChanges">Announces entries written anywhere, the widget included.</param>
     public OverviewViewModel(
         ITimeEntryRepository timeEntries,
+        ITemplateRepository templates,
         TrackingService trackingService,
         IJiraClient jiraClient,
         TimeProvider timeProvider,
         DataChangeNotifier dataChanges)
     {
         ArgumentNullException.ThrowIfNull(timeEntries);
+        ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(trackingService);
         ArgumentNullException.ThrowIfNull(jiraClient);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(dataChanges);
         _timeEntries = timeEntries;
+        _templates = templates;
         _trackingService = trackingService;
         _jiraClient = jiraClient;
         _timeProvider = timeProvider;
@@ -150,7 +155,7 @@ public sealed partial class OverviewViewModel : ObservableObject
     }
 
     private EntryEditorViewModel CreateEditor(TimeEntryRowViewModel? row) =>
-        new(row?.Entry, _timeEntries, _jiraClient, _timeProvider, _selectedDate);
+        new(row?.Entry, _timeEntries, _templates, _jiraClient, _timeProvider, _selectedDate);
 
     /// <summary>
     /// Opens the editor for the row with its delete confirmation already showing.

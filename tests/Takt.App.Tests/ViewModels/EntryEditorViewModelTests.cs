@@ -22,6 +22,7 @@ public class EntryEditorViewModelTests
 
     private StubJiraClient _jiraClient;
     private TempDatabase _tempDatabase;
+    private LiteDbTemplateRepository _templates;
     private LiteDbTimeEntryRepository _timeEntries;
     private TestTimeProvider _timeProvider;
 
@@ -30,6 +31,7 @@ public class EntryEditorViewModelTests
     {
         _tempDatabase = new();
         _timeEntries = new(_tempDatabase.Database);
+        _templates = new(_tempDatabase.Database);
         _timeProvider = new()
         {
             UtcNow = BaseTime
@@ -219,6 +221,119 @@ public class EntryEditorViewModelTests
     }
 
     [Test]
+    public void NewEntry_OffersActiveTemplatesFirstThenRecentTasks()
+    {
+        InsertTemplate("Meetings (Q3)", "TEAM-100", "Weekly sync");
+        InsertTemplate("Meetings (Q2)", "TEAM-99", null, true);
+        Insert("Code review", BaseTime.AddHours(-3), BaseTime.AddHours(-2), issueKey: "TEAM-2");
+        Insert("meetings (q3)", BaseTime.AddHours(-2), BaseTime.AddHours(-1));
+
+        var editor = CreateEditor(null);
+
+        editor.HasStartItems.Should().BeTrue();
+        editor.StartItems.Select(item => item.Name).Should().Equal("Meetings (Q3)", "Code review");
+        editor.StartItems[0].IsTemplate.Should().BeTrue();
+    }
+
+    [Test]
+    public void NewEntry_OffersAtMostEightStartingPoints()
+    {
+        for (var i = 0; i < 10; i++)
+        {
+            Insert($"Task {i}", BaseTime.AddHours(-10 + i), BaseTime.AddHours(-10 + i).AddMinutes(30));
+        }
+
+        var editor = CreateEditor(null);
+
+        editor.StartItems.Should().HaveCount(QuickSwitchSource.MaxItems);
+        editor.StartItems[0].Name.Should().Be("Task 9");
+    }
+
+    [Test]
+    public void NewEntry_OffersNoStartingPointsWhenThereAreNone()
+    {
+        var editor = CreateEditor(null);
+
+        editor.HasStartItems.Should().BeFalse();
+        editor.StartItems.Should().BeEmpty();
+    }
+
+    [Test]
+    public void ExistingEntry_OffersNoStartingPoints()
+    {
+        InsertTemplate("Meetings (Q3)", "TEAM-100", "Weekly sync");
+        var entry = Insert("Code review", BaseTime, BaseTime.AddMinutes(30));
+
+        var editor = CreateEditor(entry);
+
+        editor.HasStartItems.Should().BeFalse();
+        editor.StartItems.Should().BeEmpty();
+    }
+
+    [Test]
+    public void ApplyStartItem_TakesNameIssueAndNoteFromATemplate()
+    {
+        InsertTemplate("Meetings (Q3)", "TEAM-100", "Weekly sync");
+        var editor = CreateEditor(null);
+        var appliedCount = 0;
+        editor.StartItemApplied += (_, _) => appliedCount++;
+        editor.StartTimeText = "07:15";
+
+        editor.ApplyStartItemCommand.Execute(editor.StartItems[0]);
+
+        editor.TaskName.Should().Be("Meetings (Q3)");
+        editor.IssueKey.Should().Be("TEAM-100");
+        editor.Note.Should().Be("Weekly sync");
+        editor.StartTimeText.Should().Be("07:15");
+        editor.EndTimeText.Should().Be("09:00");
+        appliedCount.Should().Be(1);
+    }
+
+    [Test]
+    public void ApplyStartItem_ClearsWhatATemplateLacks()
+    {
+        InsertTemplate("Reading", null, null);
+        var editor = CreateEditor(null);
+        editor.IssueKey = "TEAM-7";
+        editor.Note = "Typed before";
+
+        editor.ApplyStartItemCommand.Execute(editor.StartItems[0]);
+
+        editor.TaskName.Should().Be("Reading");
+        editor.IssueKey.Should().BeNull();
+        editor.Note.Should().BeNull();
+    }
+
+    [Test]
+    public void ApplyStartItem_TakesNameAndIssueFromARecentTaskAndKeepsTheNote()
+    {
+        Insert("Code review", BaseTime.AddHours(-2), BaseTime.AddHours(-1), issueKey: "TEAM-2", note: "Old note");
+        var editor = CreateEditor(null);
+        editor.Note = "Typed before";
+
+        editor.ApplyStartItemCommand.Execute(editor.StartItems[0]);
+
+        editor.TaskName.Should().Be("Code review");
+        editor.IssueKey.Should().Be("TEAM-2");
+        editor.Note.Should().Be("Typed before");
+        editor.StartTimeText.Should().Be("08:30");
+        editor.EndTimeText.Should().Be("09:00");
+    }
+
+    [Test]
+    public void ApplyStartItem_ClearsTheIssueKeyWhenTheRecentTaskHasNone()
+    {
+        Insert("Reading", BaseTime.AddHours(-2), BaseTime.AddHours(-1));
+        var editor = CreateEditor(null);
+        editor.IssueKey = "TEAM-7";
+
+        editor.ApplyStartItemCommand.Execute(editor.StartItems[0]);
+
+        editor.TaskName.Should().Be("Reading");
+        editor.IssueKey.Should().BeNull();
+    }
+
+    [Test]
     public void Cancel_ClosesWithoutWriting()
     {
         var entry = Insert("Code review", BaseTime, BaseTime.AddMinutes(30));
@@ -234,17 +349,21 @@ public class EntryEditorViewModelTests
     }
 
     private EntryEditorViewModel CreateEditor(TimeEntry? entry) =>
-        new(entry, _timeEntries, _jiraClient, _timeProvider, BaseDate);
+        new(entry, _timeEntries, _templates, _jiraClient, _timeProvider, BaseDate);
 
     private TimeEntry Insert(
         String taskName,
         DateTime startedAt,
         DateTime endedAt,
-        SyncState syncState = SyncState.Local)
+        SyncState syncState = SyncState.Local,
+        String? issueKey = null,
+        String? note = null)
     {
         var entry = new TimeEntry
         {
             TaskName = taskName,
+            JiraIssueKey = issueKey,
+            Note = note,
             StartedAt = startedAt,
             EndedAt = endedAt,
             SyncState = syncState
@@ -252,4 +371,13 @@ public class EntryEditorViewModelTests
         _timeEntries.Insert(entry);
         return entry;
     }
+
+    private void InsertTemplate(String name, String? issueKey, String? note, Boolean archived = false) =>
+        _templates.Insert(new()
+        {
+            Name = name,
+            DefaultJiraIssueKey = issueKey,
+            DefaultNote = note,
+            Archived = archived
+        });
 }

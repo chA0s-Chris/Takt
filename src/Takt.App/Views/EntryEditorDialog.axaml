@@ -17,7 +17,44 @@
 
         <StackPanel Spacing="4">
             <TextBlock Classes="label" Text="Task name" />
-            <TextBox x:Name="TaskNameTextBox" Text="{Binding TaskName}" />
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox x:Name="TaskNameTextBox" Text="{Binding TaskName}" />
+                <Button x:Name="StartFromButton"
+                        Grid.Column="1"
+                        Classes="toolbar"
+                        Margin="8,0,0,0"
+                        Content="Start from…"
+                        IsVisible="{Binding HasStartItems}">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                            <ItemsControl x:Name="StartItemsList"
+                                          Width="300"
+                                          ItemsSource="{Binding StartItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickSwitchItem">
+                                        <Button HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Background="Transparent"
+                                                Padding="8,5"
+                                                Command="{Binding $parent[ItemsControl].((vm:EntryEditorViewModel)DataContext).ApplyStartItemCommand}"
+                                                CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Name}"
+                                                           MaxWidth="200"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding JiraIssueKey}"
+                                                           Opacity="0.55"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
         </StackPanel>
 
         <StackPanel Spacing="4">
