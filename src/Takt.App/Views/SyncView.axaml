@@ -52,7 +52,7 @@
                        Text="Jira is not configured yet — add the base URL, e-mail, and API token under Settings." />
         </Border>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,0,0,10">
+        <WrapPanel Grid.Row="2" ItemSpacing="12" LineSpacing="4" Margin="0,0,0,10">
             <TextBlock x:Name="StatusText"
                        Classes="subtle"
                        Text="{Binding StatusText}"
@@ -61,14 +61,18 @@
                        Text="{Binding LocalOnlyText}"
                        VerticalAlignment="Center"
                        IsVisible="{Binding LocalOnlyText, Converter={x:Static ObjectConverters.IsNotNull}}" />
-        </StackPanel>
+            <TextBlock Classes="muted"
+                       Text="{Binding TooShortText}"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding TooShortText, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </WrapPanel>
 
         <Border Grid.Row="3" Classes="card" ClipToBounds="True">
             <DockPanel>
                 <TextBlock x:Name="EmptyText"
                            DockPanel.Dock="Top"
                            Classes="subtle"
-                           Text="Nothing waiting — every closed entry with an issue key is in Jira."
+                           Text="Nothing waiting — no closed entry is ready to push."
                            Margin="14,16"
                            IsVisible="{Binding IsEmpty}" />
 

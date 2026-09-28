@@ -74,7 +74,8 @@ entry, a whole day, or everything. What to expect:
   to a different issue.
 - Entries **without an issue key are never pushed** — they stay local and are counted
   in one line on the sync page.
-- Entries shorter than a minute are refused: Jira does not accept them.
+- Entries shorter than a minute are never pushed either — Jira does not accept them.
+  They are left out of the list and counted in their own line on the sync page.
 - Deleting an entry in Takt leaves its Jira worklog alone. The push is one-way on
   purpose.
 

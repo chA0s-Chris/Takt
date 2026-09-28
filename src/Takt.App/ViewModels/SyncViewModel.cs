@@ -35,6 +35,11 @@ public sealed partial class SyncViewModel : ObservableObject
     [ObservableProperty]
     private String _statusText = String.Empty;
 
+    private Int32 _staysLocalCount;
+
+    [ObservableProperty]
+    private String? _tooShortText;
+
     /// <summary>Creates the view model.</summary>
     /// <param name="sync">The service performing the pushes.</param>
     /// <param name="issues">The cache used to show issue summaries.</param>
@@ -147,6 +152,15 @@ public sealed partial class SyncViewModel : ObservableObject
             _ => $"{localOnly} entries have no issue key and stay local."
         };
 
+        var tooShort = _sync.GetTooShort().Count;
+        TooShortText = tooShort switch
+        {
+            0 => null,
+            1 => "1 entry is shorter than a minute and stays local.",
+            _ => $"{tooShort} entries are shorter than a minute and stay local."
+        };
+        _staysLocalCount = localOnly + tooShort;
+
         UpdateStatus();
         _ = LoadIssueSummariesAsync();
     }
@@ -198,9 +212,19 @@ public sealed partial class SyncViewModel : ObservableObject
         var failed = Days.SelectMany(day => day.Rows).Count(row => row.HasFailed);
         if (pending.Count == 0)
         {
-            StatusText = Days.Count == 0
-                ? "Nothing to push — every closed entry is in Jira."
-                : "All pushed.";
+            // Entries without a key or shorter than a minute never become rows, so an empty
+            // list only means "all in Jira" when none of those are left over.
+            if (Days.Count > 0)
+            {
+                StatusText = "All pushed.";
+            }
+            else
+            {
+                StatusText = _staysLocalCount == 0
+                    ? "Nothing to push — every closed entry is in Jira."
+                    : "Nothing to push.";
+            }
+
             return;
         }
 
