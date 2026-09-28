@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using Takt.App.Services;
 using Takt.Core.Jira;
+using Takt.Core.Storage;
 
 /// <summary>
 /// The sync page: everything that has been tracked but is not in Jira yet, grouped by
@@ -18,6 +19,7 @@ public sealed partial class SyncViewModel : ObservableObject
     private readonly JiraIssueCache _issues;
     private readonly IJiraClient _jira;
     private readonly SyncService _sync;
+    private readonly ITimeEntryRepository _timeEntries;
     private readonly TimeProvider _timeProvider;
 
     [ObservableProperty]
@@ -44,6 +46,7 @@ public sealed partial class SyncViewModel : ObservableObject
     /// <param name="sync">The service performing the pushes.</param>
     /// <param name="issues">The cache used to show issue summaries.</param>
     /// <param name="jira">The Jira client, asked whether it is configured at all.</param>
+    /// <param name="timeEntries">The repository used by the entry editor.</param>
     /// <param name="timeProvider">Supplies the local time zone.</param>
     /// <param name="notifier">Announces changed settings.</param>
     /// <param name="dataChanges">Announces entries written anywhere, the widget included.</param>
@@ -51,6 +54,7 @@ public sealed partial class SyncViewModel : ObservableObject
         SyncService sync,
         JiraIssueCache issues,
         IJiraClient jira,
+        ITimeEntryRepository timeEntries,
         TimeProvider timeProvider,
         SettingsNotifier notifier,
         DataChangeNotifier dataChanges)
@@ -58,12 +62,14 @@ public sealed partial class SyncViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(sync);
         ArgumentNullException.ThrowIfNull(issues);
         ArgumentNullException.ThrowIfNull(jira);
+        ArgumentNullException.ThrowIfNull(timeEntries);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(notifier);
         ArgumentNullException.ThrowIfNull(dataChanges);
         _sync = sync;
         _issues = issues;
         _jira = jira;
+        _timeEntries = timeEntries;
         _timeProvider = timeProvider;
 
         // Another base URL or account means the looked-up summaries — and the keys that
@@ -80,6 +86,8 @@ public sealed partial class SyncViewModel : ObservableObject
             }
         };
     }
+
+    public event EventHandler<EntryEditorViewModel>? EditRequested;
 
     /// <summary>The days holding the entries to push, oldest first.</summary>
     public ObservableCollection<SyncDayGroupViewModel> Days { get; } = new();
@@ -163,6 +171,31 @@ public sealed partial class SyncViewModel : ObservableObject
 
         UpdateStatus();
         _ = LoadIssueSummariesAsync();
+    }
+
+    private EntryEditorViewModel CreateEditor(SyncRowViewModel row) =>
+        new(row.Entry, _timeEntries, _jira, _timeProvider, row.LocalDate);
+
+    [RelayCommand]
+    private void Delete(SyncRowViewModel? row)
+    {
+        if (row is null)
+        {
+            return;
+        }
+
+        var editor = CreateEditor(row);
+        editor.DeleteCommand.Execute(null);
+        EditRequested?.Invoke(this, editor);
+    }
+
+    [RelayCommand]
+    private void Edit(SyncRowViewModel? row)
+    {
+        if (row is not null)
+        {
+            EditRequested?.Invoke(this, CreateEditor(row));
+        }
     }
 
     [RelayCommand]

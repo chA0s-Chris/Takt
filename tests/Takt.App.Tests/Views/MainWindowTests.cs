@@ -196,11 +196,16 @@ public class MainWindowTests
         texts.Should().Contain("TEAM-1187");
         texts.Should().Contain("1 entry ready to push · 2 h 00 m");
 
-        // The row's push button reaches the page's command through the template; a broken
-        // binding would leave it without one.
-        var pushButton = window.GetVisualDescendants()
-                               .OfType<Button>()
-                               .Single(button => Equals(button.Content, "Push"));
+        // The row's action buttons reach the page's commands through the template; a broken
+        // binding would leave them without a command or row parameter.
+        var rowButtons = window.GetVisualDescendants().OfType<Button>().ToList();
+        var editButton = rowButtons.Single(button => Equals(button.Content, "Edit"));
+        var deleteButton = rowButtons.Single(button => Equals(button.Content, "Delete"));
+        var pushButton = rowButtons.Single(button => Equals(button.Content, "Push"));
+        editButton.Command.Should().NotBeNull();
+        deleteButton.Command.Should().NotBeNull();
+        editButton.CommandParameter.Should().BeOfType<SyncRowViewModel>();
+        deleteButton.CommandParameter.Should().BeOfType<SyncRowViewModel>();
         pushButton.Command.Should().NotBeNull();
         pushButton.Command.Execute(pushButton.CommandParameter);
         Dispatcher.UIThread.RunJobs();
@@ -415,7 +420,7 @@ public class MainWindowTests
             Theme = new(Settings);
             MainViewModel = new(
                 new(TimeEntries, trackingService, JiraClient, TimeProvider, dataChanges),
-                new(syncService, new(JiraClient), JiraClient, TimeProvider, new(), dataChanges),
+                new(syncService, new(JiraClient), JiraClient, TimeEntries, TimeProvider, new(), dataChanges),
                 new(Templates, JiraClient, dataChanges),
                 new(Settings, new InMemoryCredentialStore(), JiraClient, new()),
                 Theme);
