@@ -62,6 +62,7 @@ a log file.
 
 **Templates** are for work that repeats — "Meetings (Q3)" with its issue key and note.
 At the quarter rollover, duplicate the template, rename it and change the issue key.
+The *New entry* dialog on the Overview can start from a template or a recent task, too.
 
 ## Pushing to Jira
 

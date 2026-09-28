@@ -20,7 +20,6 @@ using Takt.Core.Tracking;
 /// </summary>
 public sealed partial class WidgetViewModel : ObservableObject
 {
-    private const Int32 MaxQuickSwitchItems = 8;
     private const String NotTrackingText = "Not tracking";
     private const String SetIssueText = "+ issue";
     private const String SetNoteText = "+ note";
@@ -213,16 +212,7 @@ public sealed partial class WidgetViewModel : ObservableObject
 
     private void LoadQuickSwitchItems()
     {
-        var templateItems = _templates.GetActive()
-                                      .Select(t => new QuickSwitchItem(t.Name, t.DefaultJiraIssueKey, t.DefaultNote, true));
-        var recentItems = _timeEntries.GetMostRecent(20)
-                                      .Select(e => new QuickSwitchItem(e.TaskName, e.JiraIssueKey, null, false));
-
-        var items = templateItems
-                    .Concat(recentItems)
-                    .DistinctBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
-                    .Where(i => !String.Equals(i.Name, _currentEntry?.TaskName, StringComparison.OrdinalIgnoreCase))
-                    .Take(MaxQuickSwitchItems);
+        var items = QuickSwitchSource.Load(_templates, _timeEntries, _currentEntry?.TaskName);
 
         QuickSwitchItems.Clear();
         foreach (var item in items)

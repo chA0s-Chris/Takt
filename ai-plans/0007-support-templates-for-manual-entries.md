@@ -10,14 +10,14 @@ The "New entry" dialog should offer the same templates and recent tasks as a sta
 
 ## Acceptance Criteria
 
-- [ ] The "New entry" dialog offers a "Start from…" list of active templates followed by recent tasks, built by the same rules as the widget's quick-switch list (archived templates excluded, duplicates by task name removed, at most eight items).
-- [ ] Picking a template sets the task name, issue key and note to the template's name, default issue key and default note. A value the template doesn't have clears the field.
-- [ ] Picking a recent task sets the task name and issue key, clearing the issue key when that task has none, and leaves the note unchanged.
-- [ ] Picking an item never changes the start or end date and time.
-- [ ] When there are no templates and no recent tasks, the dialog doesn't offer the list.
-- [ ] The "Edit entry" dialog doesn't offer the list.
-- [ ] The widget's quick-switch list behaves as before.
-- [ ] Automated tests cover picking a template, picking a recent task, the empty case, and that editing an existing entry offers no list.
+- [x] The "New entry" dialog offers a "Start from…" list of active templates followed by recent tasks, built by the same rules as the widget's quick-switch list (archived templates excluded, duplicates by task name removed, at most eight items).
+- [x] Picking a template sets the task name, issue key and note to the template's name, default issue key and default note. A value the template doesn't have clears the field.
+- [x] Picking a recent task sets the task name and issue key, clearing the issue key when that task has none, and leaves the note unchanged.
+- [x] Picking an item never changes the start or end date and time.
+- [x] When there are no templates and no recent tasks, the dialog doesn't offer the list.
+- [x] The "Edit entry" dialog doesn't offer the list.
+- [x] The widget's quick-switch list behaves as before.
+- [x] Automated tests cover picking a template, picking a recent task, the empty case, and that editing an existing entry offers no list.
 
 ## Technical Details
 

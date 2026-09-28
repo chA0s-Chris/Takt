@@ -13,7 +13,8 @@ using Takt.Core.Storage;
 /// Creates or edits one time entry. Dates and times are edited in local time and
 /// stored as UTC. Editing an entry that was already pushed to Jira flips it back to
 /// <see cref="SyncState.LocallyModified"/>. Overlapping entries are reported but never
-/// block saving; the running entry keeps its open end.
+/// block saving; the running entry keeps its open end. A new entry can start from a
+/// template or a recent task, the same choices the widget's quick-switch list offers.
 /// </summary>
 public sealed partial class EntryEditorViewModel : ObservableObject
 {
@@ -60,17 +61,20 @@ public sealed partial class EntryEditorViewModel : ObservableObject
     /// <summary>Creates the editor for a new or an existing entry.</summary>
     /// <param name="entry">The entry to edit, or <c>null</c> to create one.</param>
     /// <param name="timeEntries">The entry repository.</param>
+    /// <param name="templates">The template repository offering the starting points of a new entry.</param>
     /// <param name="jiraClient">The Jira client backing the issue search.</param>
     /// <param name="timeProvider">The clock and time zone used for the conversions.</param>
     /// <param name="defaultDate">The local date a new entry starts on.</param>
     public EntryEditorViewModel(
         TimeEntry? entry,
         ITimeEntryRepository timeEntries,
+        ITemplateRepository templates,
         IJiraClient jiraClient,
         TimeProvider timeProvider,
         DateOnly defaultDate)
     {
         ArgumentNullException.ThrowIfNull(timeEntries);
+        ArgumentNullException.ThrowIfNull(templates);
         ArgumentNullException.ThrowIfNull(jiraClient);
         ArgumentNullException.ThrowIfNull(timeProvider);
         _timeEntries = timeEntries;
@@ -78,6 +82,9 @@ public sealed partial class EntryEditorViewModel : ObservableObject
         _isNew = entry is null;
         Entry = entry ?? CreateEntry(timeProvider, defaultDate);
         IssueSearch = new(jiraClient);
+
+        // Starting points only make sense for an entry that has no content of its own yet.
+        StartItems = _isNew ? QuickSwitchSource.Load(templates, timeEntries) : [];
 
         TaskName = Entry.TaskName;
         IssueKey = Entry.JiraIssueKey;
@@ -101,8 +108,14 @@ public sealed partial class EntryEditorViewModel : ObservableObject
     /// <summary>Raised after an issue was picked, so the view can close the search flyout.</summary>
     public event EventHandler? IssueAssigned;
 
+    /// <summary>Raised after a starting point was picked, so the view can close its flyout.</summary>
+    public event EventHandler? StartItemApplied;
+
     /// <summary>The edited entry. Only <see cref="Save"/> writes it to the database.</summary>
     public TimeEntry Entry { get; }
+
+    /// <summary>Indicates whether there is any template or recent task to start the entry from.</summary>
+    public Boolean HasStartItems => StartItems.Count > 0;
 
     /// <summary>Indicates whether the entry can be deleted (existing entries only).</summary>
     public Boolean IsDeletable => !_isNew;
@@ -115,6 +128,12 @@ public sealed partial class EntryEditorViewModel : ObservableObject
 
     /// <summary>The Jira issue search behind the issue field.</summary>
     public JiraIssueSearchViewModel IssueSearch { get; }
+
+    /// <summary>
+    /// The templates and recent tasks a new entry can start from; empty when an existing
+    /// entry is edited.
+    /// </summary>
+    public IReadOnlyList<QuickSwitchItem> StartItems { get; }
 
     /// <summary>The dialog title.</summary>
     public String Title => _isNew ? "New entry" : "Edit entry";
@@ -151,6 +170,29 @@ public sealed partial class EntryEditorViewModel : ObservableObject
     private static Boolean TryParseTime(String text, out TimeOnly time) =>
         TimeOnly.TryParse(text, CultureInfo.CurrentCulture, out time)
         || TimeOnly.TryParseExact(text, TimeFormatPattern, CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
+
+    /// <summary>
+    /// Fills the task from a starting point. A template brings its issue key and note
+    /// along, clearing what it lacks; a recent task sets the issue key and keeps the note
+    /// typed so far. The times stay as they are.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyStartItem(QuickSwitchItem? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        TaskName = item.Name;
+        IssueKey = item.JiraIssueKey;
+        if (item.IsTemplate)
+        {
+            Note = item.Note;
+        }
+
+        StartItemApplied?.Invoke(this, EventArgs.Empty);
+    }
 
     [RelayCommand]
     private void AssignIssue(JiraIssueSummary? issue)
